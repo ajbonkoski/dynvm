@@ -22,15 +22,15 @@ class StackFrame
     return code.inst[pc++];
   }
 
-  // DynObject getLiteral(uint num)
-  // {
-  //   return frame.getLiteral(num);
-  // }
-
   void setRegister(uint regnum, DynObject obj)
   {
     assert(regnum < locals.length);
     locals[regnum] = obj;
   }
+
+  // DynObject getLiteral(uint num)
+  // {
+  //   return frame.getLiteral(num);
+  // }
 
 }

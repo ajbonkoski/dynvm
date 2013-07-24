@@ -9,6 +9,7 @@ SRC =                    \
 datastruct/stack.d       \
 main.d                   \
 dasm/instructions.d      \
+dasm/literal.d           \
 dasm/code_obj.d          \
 dasm/assembler.d         \
 interpret/dyn_obj.d      \

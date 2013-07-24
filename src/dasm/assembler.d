@@ -9,6 +9,7 @@ import std.string;
 
 import dasm.instructions;
 import dasm.code_obj;
+import dasm.literal;
 
 // global line tracking
 uint lineno = 0;
@@ -72,18 +73,18 @@ uint requireRegister(const char[] s)
 
 }
 
-uint requireLiteral(const char[] s, CodeObject co)
+Literal requireLiteral(const char[] s)
 {
   try {
     // string literal?
     if(s.length >= 2 && s[0] == '"' && s[$-1] == '"') {
-      return co.addLiteral(s[1..$-1].idup);
+      return Literal(s[1..$-1].idup);
     }
 
     // interger literal?
     else {
       enforce(s.length >= 2 && s[0] == '#');
-      return co.addLiteral(to!int(s[1..$]));
+      return Literal(to!int(s[1..$]));
     }
   } catch(Exception ex) {
     string msg = format("Failed to parse literal from %s on line %d", s, lineno);
@@ -120,7 +121,7 @@ CodeObject assembleFile(File f)
         }
         case IFormat.iABx: {
           uint a = requireRegister(line.fieldA);
-          uint bx = requireLiteral(line.fieldB, co);
+          uint bx = co.addLiteral(requireLiteral(line.fieldB));
           co.addInstr(Instruction.create(op, a, bx));
           break;
         }

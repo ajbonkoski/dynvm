@@ -112,6 +112,12 @@ CodeObject assembleFile(File f)
           co.addInstr(Instruction.create(op, a, b, c));
           break;
         }
+        case IFormat.iAB: {
+          uint a = requireRegister(line.fieldA);
+          uint b = requireRegister(line.fieldB);
+          co.addInstr(Instruction.create(op, a, b));
+          break;
+        }
         case IFormat.iABx: {
           uint a = requireRegister(line.fieldA);
           uint bx = requireLiteral(line.fieldB, co);

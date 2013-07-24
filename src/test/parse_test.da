@@ -4,5 +4,4 @@ mylabel   STOREGLOBAL  r2   "b"
 
           MOVE         r0   r1   r4
 
-          BADOP
-
+          RET          r0   r0

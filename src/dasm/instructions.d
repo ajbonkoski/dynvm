@@ -12,18 +12,20 @@ enum IOpcode
     LOADLITERAL,
     LOADGLOBAL,
     STOREGLOBAL,
-    MOVE
+    MOVE,
+    RET
 }
 
 private struct IStruct(Fields...) { mixin(bitfields!(Fields)); }
-enum IFormat { iABC, iABx, iAsBx };
+enum IFormat { iABC, iAB, iABx, iAsBx };
 
 IFormat[IOpcode.max+1] instrTable =
 [
     IOpcode.LOADLITERAL: IFormat.iABx,
     IOpcode.LOADGLOBAL:  IFormat.iABx,
     IOpcode.STOREGLOBAL: IFormat.iABx,
-    IOpcode.MOVE:        IFormat.iABC
+    IOpcode.MOVE:        IFormat.iABC,
+    IOpcode.RET:         IFormat.iAB
 ];
 
 union IData
@@ -40,7 +42,7 @@ union IData
         uint,    "a",       8,
         uint,    "c",       9,
         uint,    "b",       9
-    ) iABC;
+    ) iABC, iAB;
 
     IStruct!(
         IOpcode, "opcode",  6,
@@ -68,6 +70,7 @@ struct Instruction
 {
     IData data;
     IFormat fmt;
+    @property auto opcode() { return data.instr.opcode; }
 
     static Instruction create(string T)(IOpcode op, uint a_, uint b_, uint c_=0)
     {
@@ -76,6 +79,12 @@ struct Instruction
         static if(T == "iABC") {
           i.fmt = IFormat.iABC;
           with(i.data.iABC) {
+            opcode = op;
+            a = a_; b = b_; c = c_;
+          }
+        } else static if(T == "iAB") {
+          i.fmt = IFormat.iAB;
+          with(i.data.iAB) {
             opcode = op;
             a = a_; b = b_; c = c_;
           }
@@ -105,6 +114,7 @@ struct Instruction
       IFormat fmt = instrTable[op];
       final switch(fmt) {
         case IFormat.iABC:  return create!("iABC")(op, a_, b_, c_);
+        case IFormat.iAB:   return create!("iAB")(op, a_, b_, c_);
         case IFormat.iABx:  return create!("iABx")(op, a_, b_, c_);
         case IFormat.iAsBx: return create!("iAsBx")(op, a_, b_, c_);
       }
@@ -116,6 +126,10 @@ struct Instruction
         final switch(fmt) {
           case IFormat.iABC: with(data.iABC) {
             formattedWrite(s, "%s %d %d %d", to!string(opcode), a, b, c);
+          }
+          break;
+          case IFormat.iAB: with(data.iAB) {
+            formattedWrite(s, "%s %d %d", to!string(opcode), a, b);
           }
           break;
           case IFormat.iABx: with(data.iABx) {

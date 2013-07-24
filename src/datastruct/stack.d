@@ -1,6 +1,6 @@
 module datastruct.stack;
 
-private uint initial_size = 16;
+private enum initial_size = 16;
 
 class Stack(T)
 {

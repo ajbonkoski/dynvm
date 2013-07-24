@@ -3,6 +3,7 @@ import std.conv;
 
 import dasm.code_obj;
 import dasm.assembler;
+import interpret.interpreter;
 
 int main(string args[])
 {
@@ -12,15 +13,19 @@ int main(string args[])
     }
 
     auto f = File(args[1], "r");
+    CodeObject co;
+
     try {
-
-      CodeObject co = assembleFile(f);
-      writeln(to!string(co));
-
+      co = assembleFile(f);
+      writef("==== Loaded CodeObject ====\n%s\n", co);
     } catch(DynAssemblerException ex) {
       writeln(ex.msg);
       return -1;
     }
+
+    writeln("==== Starting execution ====");
+    interpretCode(co);
+
 
     return 0;
 }

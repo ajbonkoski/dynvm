@@ -1,6 +1,7 @@
 module interpret.stack_frame;
 
 import dasm.code_obj;
+import dasm.instructions;
 import interpret.dyn_obj;
 
 class StackFrame
@@ -15,4 +16,8 @@ class StackFrame
     pc = 0;
   }
 
+  Instruction fetchInstr()
+  {
+    return code.inst[pc++];
+  }
 }

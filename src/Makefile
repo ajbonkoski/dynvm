@@ -12,7 +12,8 @@ dasm/code_obj.d          \
 dasm/assembler.d         \
 interpret/dyn_obj.d      \
 interpret/stack_frame.d  \
-interpret/state.d
+interpret/state.d        \
+interpret/interpret.d    \
 
 ALL = $(BIN)
 all: $(ALL)

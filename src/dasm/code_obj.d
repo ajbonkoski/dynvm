@@ -5,12 +5,16 @@ import std.stdio;
 
 import dasm.instructions;
 
+enum max_stack = 256;
+
 class CodeObject
 {
   Instruction[] inst;
   uint[int]     int_literal;
   uint[string]  string_literal;
   uint next_literal_id = 0;
+
+  uint num_locals = max_stack;
 
   void addInstr(Instruction i)
   {

@@ -71,6 +71,7 @@ struct Instruction
     IData data;
     IFormat fmt;
     @property auto opcode() { return data.instr.opcode; }
+    alias data this;  // allow user to access the IData union directly
 
     static Instruction create(string T)(IOpcode op, uint a_, uint b_, uint c_=0)
     {
@@ -148,30 +149,32 @@ struct Instruction
 unittest
 {
     Instruction i;
-    i.data.raw = 0xffffffff;
-    assert(i.data.instr.opcode == 0x3f);
-    assert(i.data.instr.rest   == 0x3ffffff);
-    assert(i.data.iABC.opcode  == 0x3f);
-    assert(i.data.iABC.a       == 0xff);
-    assert(i.data.iABC.b       == 0x1ff);
-    assert(i.data.iABC.c       == 0x1ff);
-    assert(i.data.iABC.opcode  == 0x3f);
-    assert(i.data.iABC.a       == 0xff);
-    assert(i.data.iABC.b       == 0x1ff);
-    assert(i.data.iABC.c       == 0x1ff);
-    assert(i.data.iABx.opcode  == 0x3f);
-    assert(i.data.iABx.a       == 0xff);
-    assert(i.data.iABx.bx      == 0x3ffff);
-    assert(i.data.iAsBx.opcode == 0x3f);
-    assert(i.data.iAsBx.a      == 0xff);
-    assert(i.data.iAsBx.sbx    == 0x3ffff);
+    i.raw = 0xffffffff;
+    assert(i.opcode         == 0x3f);
+    assert(i.instr.opcode   == 0x3f);
+    assert(i.instr.rest     == 0x3ffffff);
+    assert(i.iABC.opcode    == 0x3f);
+    assert(i.iABC.a         == 0xff);
+    assert(i.iABC.b         == 0x1ff);
+    assert(i.iABC.c         == 0x1ff);
+    assert(i.iABC.opcode    == 0x3f);
+    assert(i.iABC.a         == 0xff);
+    assert(i.iABC.b         == 0x1ff);
+    assert(i.iABC.c         == 0x1ff);
+    assert(i.iABx.opcode    == 0x3f);
+    assert(i.iABx.a         == 0xff);
+    assert(i.iABx.bx        == 0x3ffff);
+    assert(i.iAsBx.opcode   == 0x3f);
+    assert(i.iAsBx.a        == 0xff);
+    assert(i.iAsBx.sbx      == 0x3ffff);
 
     i = Instruction.create!("iABx")(IOpcode.LOADGLOBAL, 5, 10);
-    assert(i.data.instr.opcode == 0x1);
-    assert(i.data.instr.rest   == 0xa05);
-    assert(i.data.iABx.opcode  == 1);
-    assert(i.data.iABx.a       == 5);
-    assert(i.data.iABx.bx      == 10);
+    assert(i.opcode         == 0x1);
+    assert(i.instr.opcode   == 0x1);
+    assert(i.instr.rest     == 0xa05);
+    assert(i.iABx.opcode    == 1);
+    assert(i.iABx.a         == 5);
+    assert(i.iABx.bx        == 10);
 
     writeln(typeid(typeof(instrLookup)));
 }

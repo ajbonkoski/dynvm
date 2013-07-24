@@ -13,6 +13,7 @@ class StackFrame
   this(CodeObject co)
   {
     code = co;
+    locals.length = co.num_locals;
     pc = 0;
   }
 
@@ -20,4 +21,16 @@ class StackFrame
   {
     return code.inst[pc++];
   }
+
+  // DynObject getLiteral(uint num)
+  // {
+  //   return frame.getLiteral(num);
+  // }
+
+  void setRegister(uint regnum, DynObject obj)
+  {
+    assert(regnum < locals.length);
+    locals[regnum] = obj;
+  }
+
 }

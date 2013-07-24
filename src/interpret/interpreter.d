@@ -17,7 +17,10 @@ void interpretCode(CodeObject co)
 
     final switch(inst.opcode)
     {
-      case IOpcode.LOADLITERAL: break;
+      case IOpcode.LOADLITERAL:
+        //DynObject obj = state.getLiteral(inst.iABx.bx);
+        state.setRegister(inst.iABx.a, null);
+        break;
       case IOpcode.LOADGLOBAL:  break;
       case IOpcode.STOREGLOBAL: break;
       case IOpcode.MOVE:        break;

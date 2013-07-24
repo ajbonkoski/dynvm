@@ -1,12 +1,14 @@
 DC = dmd
 FLAGS = -O
 
-BIN = dynvm
-BIN_TEST = dynvm-test
+BIN = dynvm-asm
+BIN_TEST = dynvm-asm-test
 
 # Source files
 SRC =               \
-main.d
+asm/instructions.d  \
+asm/code_obj.d      \
+asm/assembler.d     \
 
 ALL = $(BIN)
 all: $(ALL)

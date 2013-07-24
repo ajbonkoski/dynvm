@@ -1,0 +1,5 @@
+
+          LOADGLOBAL   r0   "a"
+mylabel   STOREGLOBAL  r2   "b"
+          MOVE         r0   r1   r4
+

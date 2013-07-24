@@ -1,11 +1,12 @@
 DC = dmd
 FLAGS = -O
 
-BIN = dynvm-asm
-BIN_TEST = dynvm-asm-test
+BIN = dynvm
+BIN_TEST = dynvm-test
 
 # Source files
 SRC =                    \
+main.d                   \
 dasm/instructions.d      \
 dasm/code_obj.d          \
 dasm/assembler.d         \

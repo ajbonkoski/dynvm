@@ -6,3 +6,5 @@
 
 ## Binaries
 *.o
+dynvm-asm
+dynvm-asm-test

@@ -1,5 +1,7 @@
-import dyn_obj;
-import stack_frame;
+module interpret.state;
+
+import interpret.dyn_obj;
+import interpret.stack_frame;
 
 class State
 {

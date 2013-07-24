@@ -1,3 +1,5 @@
+module dasm.instructions;
+
 import std.bitmanip;
 import std.conv;
 import std.format;

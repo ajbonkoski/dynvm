@@ -1,5 +1,7 @@
-import code_obj;
-import dyn_obj;
+module interpret.stack_frame;
+
+import dasm.code_obj;
+import interpret.dyn_obj;
 
 class StackFrame
 {

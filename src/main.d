@@ -1,8 +1,8 @@
 import std.stdio;
 import std.conv;
 
-import code_obj;
-import assembler;
+import dasm.code_obj;
+import dasm.assembler;
 
 int main(string args[])
 {
@@ -12,7 +12,15 @@ int main(string args[])
     }
 
     auto f = File(args[1], "r");
-    CodeObject co = assembleFile(f);
-    writeln(to!string(co));
+    try {
+
+      CodeObject co = assembleFile(f);
+      writeln(to!string(co));
+
+    } catch(DynAssemblerException ex) {
+      writeln(ex.msg);
+      return -1;
+    }
+
     return 0;
 }

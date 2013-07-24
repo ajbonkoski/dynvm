@@ -1,7 +1,9 @@
+module dasm.code_obj;
+
 import std.conv;
 import std.stdio;
 
-import instructions;
+import dasm.instructions;
 
 class CodeObject
 {

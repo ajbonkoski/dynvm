@@ -1,14 +1,22 @@
+module dasm.assembler;
+
 import std.c.stdlib;
 import std.stdio;
 import std.array;
 import std.conv;
 import std.exception;
+import std.string;
 
-import instructions;
-import code_obj;
+import dasm.instructions;
+import dasm.code_obj;
 
-// gloabl line tracking
+// global line tracking
 uint lineno = 0;
+
+class DynAssemblerException : Exception
+{
+    this(string s) { super(s); }
+}
 
 auto iswhite(char c)
 {
@@ -41,8 +49,8 @@ IOpcode getIOpcode(Line l)
 {
   IOpcode *op = (l.opcode in instrLookup);
   if(op == null) {
-    writef("Invalid opcode '%s' at line %d\n", l.opcode, lineno);
-    exit(-1);
+    string msg = format("Invalid opcode '%s' at line %d\n", l.opcode, lineno);
+    throw new DynAssemblerException(msg);
   }
 
   return *op;
@@ -58,12 +66,10 @@ uint requireRegister(const char[] s)
     return to!uint(num);
 
   } catch(Exception ex) {
-
-    writeln("Failed to parse a register on line ", lineno);
-    exit(-1);
-    assert(0);
-
+    string msg = format("Failed to parse register from %s on line %d", s, lineno);
+    throw new DynAssemblerException(msg);
   }
+
 }
 
 uint requireLiteral(const char[] s, CodeObject co)
@@ -80,11 +86,8 @@ uint requireLiteral(const char[] s, CodeObject co)
       return co.addLiteral(to!int(s[1..$]));
     }
   } catch(Exception ex) {
-
-    writeln("Failed to parse literal on line ", lineno);
-    exit(-1);
-    assert(0);
-
+    string msg = format("Failed to parse literal from %s on line %d", s, lineno);
+    throw new DynAssemblerException(msg);
   }
 }
 
@@ -93,6 +96,7 @@ CodeObject assembleFile(File f)
 {
     CodeObject co = new CodeObject();
 
+    lineno = 0;
     foreach(l; f.byLine()) {
       lineno++;
       if(l.length == 0)
@@ -115,8 +119,8 @@ CodeObject assembleFile(File f)
           break;
         }
         case IFormat.iAsBx:
-          assert(0, "unimplemented");
-          break;
+          string msg = format("IFormat.iAsBx is unimplemented at line %d", lineno);
+          throw new DynAssemblerException(msg);
       }
 
     }

@@ -1,5 +1,6 @@
 module interpret.dyn_obj;
 
+import std.string;
 import dasm.literal;
 
 class DynObject
@@ -11,12 +12,20 @@ class DynString : DynObject
 {
   string s;
   this(string s_) { s = s_; }
+  override string toString()
+  {
+    return format("DynString(\"%s\")", s);
+  }
 }
 
 class DynInt : DynObject
 {
   int i;
   this(int i_) { i = i_; }
+  override string toString()
+  {
+    return format("DynInt(%d)", i);
+  }
 }
 
 struct DynObjectBuiltin

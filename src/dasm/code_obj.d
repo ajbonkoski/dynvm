@@ -15,8 +15,7 @@ class CodeObject
   uint[Literal]  literal_to_uint;
   Literal[]      uint_to_literal;
   uint next_literal_id = 0;
-
-  uint num_locals = max_stack;
+  uint num_locals = 0;
 
   this()
   {
@@ -40,6 +39,13 @@ class CodeObject
     uint_to_literal[next_literal_id] = l;
 
     return next_literal_id++;
+  }
+
+  uint addRegister(uint num)
+  {
+    if(num >= num_locals)
+      num_locals = num+1;
+    return num;
   }
 
   Literal getLiteral(uint i)

@@ -20,7 +20,7 @@ void interpretCode(CodeObject co)
     {
       case IOpcode.LOADLITERAL:
         DynObject obj = state.getLiteral(inst.iABx.bx);
-        state.setRegister(inst.iABx.a, null);
+        state.setRegister(inst.iABx.a, obj);
         break;
       case IOpcode.LOADGLOBAL:  break;
       case IOpcode.STOREGLOBAL: break;

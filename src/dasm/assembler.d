@@ -57,14 +57,14 @@ IOpcode getIOpcode(Line l)
   return *op;
 }
 
-uint requireRegister(const char[] s)
+uint parseRegister(CodeObject co, const char[] s)
 {
   try {
 
     char r = s[0];
     enforce(r == 'r');
     auto num = s[1..$];
-    return to!uint(num);
+    return co.addRegister(to!uint(num));
 
   } catch(Exception ex) {
     string msg = format("Failed to parse register from %s on line %d", s, lineno);
@@ -73,25 +73,24 @@ uint requireRegister(const char[] s)
 
 }
 
-Literal requireLiteral(const char[] s)
+uint parseLiteral(CodeObject co, const char[] s)
 {
   try {
     // string literal?
     if(s.length >= 2 && s[0] == '"' && s[$-1] == '"') {
-      return Literal(s[1..$-1].idup);
+      return co.addLiteral(Literal(s[1..$-1].idup));
     }
 
     // interger literal?
     else {
       enforce(s.length >= 2 && s[0] == '#');
-      return Literal(to!int(s[1..$]));
+      return co.addLiteral(Literal(to!int(s[1..$])));
     }
   } catch(Exception ex) {
     string msg = format("Failed to parse literal from %s on line %d", s, lineno);
     throw new DynAssemblerException(msg);
   }
 }
-
 
 CodeObject assembleFile(File f)
 {
@@ -107,21 +106,21 @@ CodeObject assembleFile(File f)
       IOpcode op = line.getIOpcode();
       final switch(instrTable[op]) {
         case IFormat.iABC: {
-          uint a = requireRegister(line.fieldA);
-          uint b = requireRegister(line.fieldB);
-          uint c = requireRegister(line.fieldC);
+          uint a = co.parseRegister(line.fieldA);
+          uint b = co.parseRegister(line.fieldB);
+          uint c = co.parseRegister(line.fieldC);
           co.addInstr(Instruction.create(op, a, b, c));
           break;
         }
         case IFormat.iAB: {
-          uint a = requireRegister(line.fieldA);
-          uint b = requireRegister(line.fieldB);
+          uint a = co.parseRegister(line.fieldA);
+          uint b = co.parseRegister(line.fieldB);
           co.addInstr(Instruction.create(op, a, b));
           break;
         }
         case IFormat.iABx: {
-          uint a = requireRegister(line.fieldA);
-          uint bx = co.addLiteral(requireLiteral(line.fieldB));
+          uint a = co.parseRegister(line.fieldA);
+          uint bx = co.parseLiteral(line.fieldB);
           co.addInstr(Instruction.create(op, a, bx));
           break;
         }

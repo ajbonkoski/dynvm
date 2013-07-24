@@ -1,0 +1,24 @@
+----------------------------------------------------------------------
+DynAsm is a bytecode designed for dynamic languages.
+  * Inspired by the bytecode used in the lua5.0 implementation
+----------------------------------------------------------------------
+
+FIELD TYPES: specified with regex
+----------------------------------------------------------------------
+register:  r[0-9]+
+string:    "[^ "]*"
+integer:   #[0-9]+
+literal:   string | integer
+
+PSEUDOCODE CONVETIONS
+----------------------------------------------------------------------
+R[n]    Access the set of registers with n as the index
+L[n]    Access the set of local literals with n as the index
+G[n]    Access the set of globals with n as the index
+
+OPCODE(layout)      fieldA     fieldB     fieldC    |  pseudocode
+----------------------------------------------------------------------
+LOADLITERAL(iABx)   register   literal              |  R[A] = L[B]
+LOADGLOBAL(iABx)    register   string               |  R[A] = G[B]
+STOREGLOBAL(iABx)   register   string               |  G[B] = R[A]
+MOVE(iABC)          register   register             |  R[A] = R[B]

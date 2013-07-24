@@ -5,10 +5,10 @@ BIN = dynvm-asm
 BIN_TEST = dynvm-asm-test
 
 # Source files
-SRC =               \
-asm/instructions.d  \
-asm/code_obj.d      \
-asm/assembler.d     \
+SRC =                    \
+dasm/instructions.d      \
+dasm/code_obj.d          \
+dasm/assembler.d         \
 
 ALL = $(BIN)
 all: $(ALL)

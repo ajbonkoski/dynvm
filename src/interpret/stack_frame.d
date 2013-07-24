@@ -28,9 +28,18 @@ class StackFrame
     locals[regnum] = obj;
   }
 
-  // DynObject getLiteral(uint num)
-  // {
-  //   return frame.getLiteral(num);
-  // }
+  DynObject getLiteral(uint num)
+  {
+    return DynObjectBuiltin.create(code.getLiteral(num));
+  }
+
+  void print()
+  {
+    import std.stdio;
+    writef("Num locals: %d\n", locals.length);
+    foreach(i, obj; locals) {
+      writef("%d: %s\n", i, obj);
+    }
+  }
 
 }

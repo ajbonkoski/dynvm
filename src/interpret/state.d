@@ -40,4 +40,14 @@ class State
     assert(!stack.isEmpty());
     return stack.pop();
   }
+
+  void print()
+  {
+    import std.stdio;
+    writef("Num Globals: %d\n", globals.length);
+    writef("Num Frames:  %d\n", stack.length);
+    writef("Top frame:\n");
+    frame.print();
+  }
+
 }

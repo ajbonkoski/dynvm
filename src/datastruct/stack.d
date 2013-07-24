@@ -6,6 +6,7 @@ class Stack(T)
 {
   T data[];
   uint index; // always points to next available slot
+  @property uint length(){ return index; }
 
   this(uint size=initial_size)
   {
@@ -36,4 +37,5 @@ class Stack(T)
       data.length *= 2;
     data[index++] = elt;
   }
+
 }

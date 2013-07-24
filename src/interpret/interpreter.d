@@ -4,6 +4,7 @@ import std.stdio;
 
 import dasm.code_obj;
 import dasm.instructions;
+import interpret.dyn_obj;
 import interpret.state;
 
 void interpretCode(CodeObject co)
@@ -18,7 +19,7 @@ void interpretCode(CodeObject co)
     final switch(inst.opcode)
     {
       case IOpcode.LOADLITERAL:
-        //DynObject obj = state.getLiteral(inst.iABx.bx);
+        DynObject obj = state.getLiteral(inst.iABx.bx);
         state.setRegister(inst.iABx.a, null);
         break;
       case IOpcode.LOADGLOBAL:  break;
@@ -30,4 +31,6 @@ void interpretCode(CodeObject co)
   }
 
   writeln("Finished!");
+  writeln("==== Final State: ====");
+  state.print();
 }

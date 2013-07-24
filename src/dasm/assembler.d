@@ -89,14 +89,8 @@ uint requireLiteral(const char[] s, CodeObject co)
 }
 
 
-int main(string args[])
+CodeObject assembleFile(File f)
 {
-    if(args.length < 2) {
-      writeln("expected an input file parameter\n");
-      return -1;
-    }
-
-    auto f = File(args[1], "r");
     CodeObject co = new CodeObject();
 
     foreach(l; f.byLine()) {
@@ -127,6 +121,18 @@ int main(string args[])
 
     }
 
+    return co;
+}
+
+int main(string args[])
+{
+    if(args.length < 2) {
+      writeln("expected an input file parameter\n");
+      return -1;
+    }
+
+    auto f = File(args[1], "r");
+    CodeObject co = assembleFile(f);
     writeln(to!string(co));
     return 0;
 }

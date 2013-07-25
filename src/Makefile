@@ -1,5 +1,5 @@
 DC = dmd
-FLAGS = -O
+FLAGS = -O -unittest
 
 BIN = dynvm
 BIN_TEST = dynvm-test

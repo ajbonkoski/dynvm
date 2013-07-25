@@ -175,6 +175,5 @@ unittest
     assert(i.iABx.opcode    == 1);
     assert(i.iABx.a         == 5);
     assert(i.iABx.bx        == 10);
-
-    writeln(typeid(typeof(instrLookup)));
 }
+

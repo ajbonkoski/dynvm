@@ -7,13 +7,6 @@ import dasm.instructions;
 import interpret.dyn_obj;
 import interpret.stack_frame;
 
-// helper for forwarding StackFrame methods
-// used with a mixin in State's definition
-// private string FrameMethod(string name, string args...)
-// {
-//   return
-// }
-
 class State
 {
   DynObject[string] globals;
@@ -68,11 +61,4 @@ class State
     frame.print();
   }
 
-}
-
-unittest
-{
-  int[string] map;
-  import std.stdio;
-  writeln(typeid(typeof(map.keys)));
 }

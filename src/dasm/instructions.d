@@ -2,8 +2,7 @@ module dasm.instructions;
 
 import std.bitmanip;
 import std.conv;
-import std.format;
-import std.array;
+import std.string;
 import std.stdio;
 
 
@@ -79,25 +78,25 @@ struct Instruction
 
         static if(T == "iABC") {
           i.fmt = IFormat.iABC;
-          with(i.data.iABC) {
+          with(i.iABC) {
             opcode = op;
             a = a_; b = b_; c = c_;
           }
         } else static if(T == "iAB") {
           i.fmt = IFormat.iAB;
-          with(i.data.iAB) {
+          with(i.iAB) {
             opcode = op;
             a = a_; b = b_; c = c_;
           }
         } else static if(T == "iABx") {
           i.fmt = IFormat.iABx;
-          with(i.data.iABx) {
+          with(i.iABx) {
             opcode = op;
             a = a_; bx = b_;
           }
         } else static if(T == "iAsBx") {
           i.fmt = IFormat.iAsBx;
-          with(i.data.iAsBx) {
+          with(i.iAsBx) {
             opcode = op;
             a = a_; sbx = b_;
           }
@@ -123,26 +122,24 @@ struct Instruction
 
     string toString()
     {
-        auto s = appender!string();
         final switch(fmt) {
-          case IFormat.iABC: with(data.iABC) {
-            formattedWrite(s, "%s %d %d %d", to!string(opcode), a, b, c);
+          case IFormat.iABC: with(iABC) {
+            return format("%s %d %d %d", opcode, a, b, c);
           }
           break;
-          case IFormat.iAB: with(data.iAB) {
-            formattedWrite(s, "%s %d %d", to!string(opcode), a, b);
+          case IFormat.iAB: with(iAB) {
+            return format("%s %d %d", opcode, a, b);
           }
           break;
-          case IFormat.iABx: with(data.iABx) {
-            formattedWrite(s, "%s %d %d", to!string(opcode), a, bx);
+          case IFormat.iABx: with(iABx) {
+            return format("%s %d %d", opcode, a, bx);
           }
           break;
-          case IFormat.iAsBx: with(data.iAsBx) {
-            formattedWrite(s, "%s %d %d", to!string(opcode), a, sbx);
+          case IFormat.iAsBx: with(iAsBx) {
+            return format("%s %d %d", opcode, a, sbx);
           }
           break;
         }
-        return s.data;
     }
 }
 
@@ -168,7 +165,7 @@ unittest
     assert(i.iAsBx.a        == 0xff);
     assert(i.iAsBx.sbx      == 0x3ffff);
 
-    i = Instruction.create!("iABx")(IOpcode.LOADGLOBAL, 5, 10);
+    i = Instruction.create!(iABx)(IOpcode.LOADGLOBAL, 5, 10);
     assert(i.opcode         == 0x1);
     assert(i.instr.opcode   == 0x1);
     assert(i.instr.rest     == 0xa05);

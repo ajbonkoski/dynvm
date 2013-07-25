@@ -1,5 +1,8 @@
 module interpret.stack_frame;
 
+import std.format;
+
+import common.common;
 import dasm.code_obj;
 import dasm.literal;
 import dasm.instructions;
@@ -45,13 +48,16 @@ class StackFrame
     return DynObjectBuiltin.create(code.getLiteral(num));
   }
 
-  void print()
+  auto stringify(IndentedWriter iw)
   {
-    import std.stdio;
-    writef("Num locals: %d\n", locals.length);
+    iw.formattedWrite("Num locals: %d\n", locals.length);
+    iw.indent();
     foreach(i, obj; locals) {
-      writef("%d: %s\n", i, obj);
+      iw.formattedWrite("%d: %s\n", i, obj);
     }
+    iw.unindent();
+
+    return iw;
   }
 
 }

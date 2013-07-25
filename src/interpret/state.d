@@ -1,5 +1,8 @@
 module interpret.state;
 
+import std.format;
+
+import common.common;
 import datastruct.stack;
 import dasm.code_obj;
 import dasm.literal;
@@ -49,16 +52,22 @@ class State
     globals[l.s] = obj;
   }
 
-  void print()
+  auto stringify(IndentedWriter iw)
   {
-    import std.stdio;
-    writef("Num Globals: %d\n", globals.length);
+    iw.formattedWrite("Num Globals: %d\n", globals.length);
+    iw.indent();
     foreach(s; globals.keys.sort){
-      writef("%s: %s\n", s, globals[s]);
+      iw.formattedWrite("%s: %s\n", s, globals[s]);
     }
-    writef("Num Frames:  %d\n", stack.length);
-    writef("Top frame:\n");
-    frame.print();
+    iw.unindent;
+    iw.formattedWrite("Num Frames:  %d\n", stack.length);
+    iw.formattedWrite("Top frame:\n");
+
+    iw.indent();
+    frame.stringify(iw);
+    iw.unindent();
+
+    return iw;
   }
 
 }

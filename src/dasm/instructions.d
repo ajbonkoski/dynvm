@@ -165,7 +165,7 @@ unittest
     assert(i.iAsBx.a        == 0xff);
     assert(i.iAsBx.sbx      == 0x3ffff);
 
-    i = Instruction.create!(iABx)(IOpcode.LOADGLOBAL, 5, 10);
+    i = Instruction.create!("iABx")(IOpcode.LOADGLOBAL, 5, 10);
     assert(i.opcode         == 0x1);
     assert(i.instr.opcode   == 0x1);
     assert(i.instr.rest     == 0xa05);

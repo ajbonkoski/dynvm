@@ -6,6 +6,7 @@ BIN_TEST = dynvm-test
 
 # Source files
 SRC =                    \
+common/common.d          \
 datastruct/stack.d       \
 main.d                   \
 dasm/instructions.d      \

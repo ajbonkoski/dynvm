@@ -2,6 +2,7 @@ module interpret.interpreter;
 
 import std.stdio;
 
+import common.common;
 import dasm.code_obj;
 import dasm.instructions;
 import interpret.dyn_obj;
@@ -45,5 +46,5 @@ void interpretCode(CodeObject co)
 
   writeln("Finished!");
   writeln("==== Final State: ====");
-  state.print();
+  writeln(state.stringify(new IndentedWriter(4)).data);
 }

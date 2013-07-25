@@ -60,9 +60,19 @@ class State
   {
     import std.stdio;
     writef("Num Globals: %d\n", globals.length);
+    foreach(s; globals.keys.sort){
+      writef("%s: %s\n", s, globals[s]);
+    }
     writef("Num Frames:  %d\n", stack.length);
     writef("Top frame:\n");
     frame.print();
   }
 
+}
+
+unittest
+{
+  int[string] map;
+  import std.stdio;
+  writeln(typeid(typeof(map.keys)));
 }

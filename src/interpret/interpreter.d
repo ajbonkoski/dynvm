@@ -19,12 +19,25 @@ void interpretCode(CodeObject co)
     final switch(inst.opcode)
     {
       case IOpcode.LOADLITERAL:
-        DynObject obj = state.getLiteral(inst.iABx.bx);
+        auto obj = state.getLiteralObj(inst.iABx.bx);
         state.setRegister(inst.iABx.a, obj);
         break;
-      case IOpcode.LOADGLOBAL:  break;
-      case IOpcode.STOREGLOBAL: break;
-      case IOpcode.MOVE:        break;
+
+      case IOpcode.LOADGLOBAL:
+        auto obj = state.getGlobal(inst.iABx.bx);
+        state.setRegister(inst.iABx.a, obj);
+        break;
+
+      case IOpcode.STOREGLOBAL:
+        auto obj = state.getRegister(inst.iABx.a);
+        state.setGlobal(inst.iABx.bx, obj);
+        break;
+
+      case IOpcode.MOVE:
+        auto obj = state.getRegister(inst.iAB.b);
+        state.setRegister(inst.iAB.a, obj);
+        break;
+
       case IOpcode.RET:
         break EXECLOOP;  // for now RET just exits
     }

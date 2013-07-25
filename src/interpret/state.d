@@ -2,6 +2,7 @@ module interpret.state;
 
 import datastruct.stack;
 import dasm.code_obj;
+import dasm.literal;
 import dasm.instructions;
 import interpret.dyn_obj;
 import interpret.stack_frame;
@@ -39,6 +40,20 @@ class State
   {
     assert(!stack.isEmpty());
     return stack.pop();
+  }
+
+  DynObject getGlobal(uint num)
+  {
+    Literal l = frame.getLiteral(num);
+    assert(l.type == LType.String);
+    return globals[l.s];
+  }
+
+  void setGlobal(uint num, DynObject obj)
+  {
+    Literal l = frame.getLiteral(num);
+    assert(l.type == LType.String);
+    globals[l.s] = obj;
   }
 
   void print()

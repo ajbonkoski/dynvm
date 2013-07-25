@@ -1,6 +1,7 @@
 module interpret.stack_frame;
 
 import dasm.code_obj;
+import dasm.literal;
 import dasm.instructions;
 import interpret.dyn_obj;
 
@@ -28,7 +29,18 @@ class StackFrame
     locals[regnum] = obj;
   }
 
-  DynObject getLiteral(uint num)
+  DynObject getRegister(uint regnum)
+  {
+    assert(regnum < locals.length);
+    return locals[regnum];
+  }
+
+  Literal getLiteral(uint num)
+  {
+    return code.getLiteral(num);
+  }
+
+  DynObject getLiteralObj(uint num)
   {
     return DynObjectBuiltin.create(code.getLiteral(num));
   }

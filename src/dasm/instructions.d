@@ -24,7 +24,7 @@ IFormat[IOpcode.max+1] instrTable =
     IOpcode.LOADLITERAL: IFormat.iABx,
     IOpcode.LOADGLOBAL:  IFormat.iABx,
     IOpcode.STOREGLOBAL: IFormat.iABx,
-    IOpcode.MOVE:        IFormat.iABC,
+    IOpcode.MOVE:        IFormat.iAB,
     IOpcode.RET:         IFormat.iAB
 ];
 

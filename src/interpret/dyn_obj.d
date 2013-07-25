@@ -5,26 +5,28 @@ import dasm.literal;
 
 class DynObject
 {
-
+  uint id;
+  static uint next_id = 0;
+  this(){ id = next_id++; }
 }
 
 class DynString : DynObject
 {
   string s;
-  this(string s_) { s = s_; }
+  this(string s_) { super(); s = s_; }
   override string toString()
   {
-    return format("DynString(\"%s\")", s);
+    return format("DynString(id=%d, \"%s\")", id, s);
   }
 }
 
 class DynInt : DynObject
 {
   int i;
-  this(int i_) { i = i_; }
+  this(int i_) { super(); i = i_; }
   override string toString()
   {
-    return format("DynInt(%d)", i);
+    return format("DynInt(id=%d, %d)", id, i);
   }
 }
 

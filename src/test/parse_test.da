@@ -1,7 +1,7 @@
 
-          LOADLITERAL  r3   "ads"
+          LITERAL      r3   "ads"
 mylabel   STOREGLOBAL  r3   "a"
           LOADGLOBAL   r2   "a"
-          LOADLITERAL  r4   #45
+          LITERAL      r4   #45
           MOVE         r0   r1
           RET          r0   r0

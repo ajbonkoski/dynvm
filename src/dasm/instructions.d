@@ -8,23 +8,31 @@ import std.stdio;
 
 enum IOpcode
 {
-    LOADLITERAL,
+    LITERAL,
     LOADGLOBAL,
     STOREGLOBAL,
     MOVE,
-    RET
+    RET,
+    NEWOBJECT,
+    SETSELF,
+    GET,
+    SET
 }
 
 private struct IStruct(Fields...) { mixin(bitfields!(Fields)); }
-enum IFormat { iABC, iAB, iABx, iAsBx };
+enum IFormat { iABC, iAB, iA, iABx, iAsBx };
 
 IFormat[IOpcode.max+1] instrTable =
 [
-    IOpcode.LOADLITERAL: IFormat.iABx,
+    IOpcode.LITERAL:     IFormat.iABx,
     IOpcode.LOADGLOBAL:  IFormat.iABx,
     IOpcode.STOREGLOBAL: IFormat.iABx,
     IOpcode.MOVE:        IFormat.iAB,
-    IOpcode.RET:         IFormat.iAB
+    IOpcode.RET:         IFormat.iAB,
+    IOpcode.NEWOBJECT:   IFormat.iA,
+    IOpcode.SETSELF:     IFormat.iA,
+    IOpcode.GET:         IFormat.iABx,
+    IOpcode.SET:         IFormat.iABx,
 ];
 
 union IData
@@ -41,7 +49,7 @@ union IData
         uint,    "a",       8,
         uint,    "c",       9,
         uint,    "b",       9
-    ) iABC, iAB;
+             ) iABC, iAB, iA;
 
     IStruct!(
         IOpcode, "opcode",  6,
@@ -72,7 +80,7 @@ struct Instruction
     @property auto opcode() { return data.instr.opcode; }
     alias data this;  // allow user to access the IData union directly
 
-    static Instruction create(string T)(IOpcode op, uint a_, uint b_, uint c_=0)
+    static Instruction create(string T)(IOpcode op, uint a_, uint b_=0, uint c_=0)
     {
         Instruction i;
 
@@ -85,6 +93,12 @@ struct Instruction
         } else static if(T == "iAB") {
           i.fmt = IFormat.iAB;
           with(i.iAB) {
+            opcode = op;
+            a = a_; b = b_; c = c_;
+          }
+        } else static if(T == "iA") {
+          i.fmt = IFormat.iA;
+          with(i.iA) {
             opcode = op;
             a = a_; b = b_; c = c_;
           }
@@ -109,12 +123,13 @@ struct Instruction
         return i;
     }
 
-    static Instruction create(IOpcode op, uint a_, uint b_, uint c_=0)
+    static Instruction create(IOpcode op, uint a_, uint b_=0, uint c_=0)
     {
       IFormat fmt = instrTable[op];
       final switch(fmt) {
         case IFormat.iABC:  return create!("iABC")(op, a_, b_, c_);
         case IFormat.iAB:   return create!("iAB")(op, a_, b_, c_);
+        case IFormat.iA:   return create!("iA")(op, a_, b_, c_);
         case IFormat.iABx:  return create!("iABx")(op, a_, b_, c_);
         case IFormat.iAsBx: return create!("iAsBx")(op, a_, b_, c_);
       }
@@ -129,6 +144,10 @@ struct Instruction
           break;
           case IFormat.iAB: with(iAB) {
             return format("%s %d %d", opcode, a, b);
+          }
+          break;
+          case IFormat.iA: with(iA) {
+            return format("%s %d", opcode, a);
           }
           break;
           case IFormat.iABx: with(iABx) {

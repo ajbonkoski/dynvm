@@ -41,6 +41,24 @@ void interpretCode(CodeObject co)
 
       case IOpcode.RET:
         break EXECLOOP;  // for now RET just exits
+
+      case IOpcode.NEWOBJECT:
+        state.setRegister(inst.iA.a, DynObjectBuiltin.create!("object"));
+        break;
+
+      case IOpcode.SETSELF:
+        state.self = state.getRegister(inst.iAB.a);
+        break;
+
+      case IOpcode.GET:
+        auto obj = state.selfGet(inst.iABx.bx);
+        state.setRegister(inst.iABx.a, obj);
+        break;
+
+      case IOpcode.SET:
+        auto obj = state.getRegister(inst.iABx.a);
+        state.selfSet(inst.iABx.bx, obj);
+        break;
     }
   }
 

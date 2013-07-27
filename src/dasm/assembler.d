@@ -26,12 +26,18 @@ auto iswhite(char c)
 
 class Line
 {
-  public char[][] fields;
-  public char[] label;
+  char[][] fields;
+  char[] label;
+  bool is_instruction = true;
 
   this(char[] line)
   {
     fields = split(line);
+    if(fields[0][0..2] == ";;") {
+      is_instruction = false;
+      return;
+    }
+
     if(!iswhite(line[0])) {
       label = fields[0];
       fields = fields[1..$];
@@ -103,6 +109,9 @@ CodeObject assembleFile(File f)
         continue;
 
       Line line = new Line(l);
+      if(!line.is_instruction)
+        continue;
+
       IOpcode op = line.getIOpcode();
       final switch(instrTable[op]) {
         case IFormat.iABC: {
@@ -116,6 +125,11 @@ CodeObject assembleFile(File f)
           uint a = co.parseRegister(line.fieldA);
           uint b = co.parseRegister(line.fieldB);
           co.addInstr(Instruction.create(op, a, b));
+          break;
+        }
+        case IFormat.iA: {
+          uint a = co.parseRegister(line.fieldA);
+          co.addInstr(Instruction.create(op, a));
           break;
         }
         case IFormat.iABx: {

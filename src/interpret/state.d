@@ -17,6 +17,10 @@ class State
   @property auto frame() { return stack.top(); }
   alias frame this; // allow the user to directly call methods on the to StackFrame
 
+  DynObject _self;
+  @property auto self() { return _self; }
+  @property void self(DynObject s) { _self = s; }
+
   this(CodeObject co)
   {
     this(new StackFrame(co));
@@ -52,6 +56,22 @@ class State
     globals[l.s] = obj;
   }
 
+  DynObject selfGet(uint num)
+  {
+    assert(self !is null);
+    Literal l = frame.getLiteral(num);
+    assert(l.type == LType.String);
+    return self.table[l.s];
+  }
+
+  void selfSet(uint num, DynObject obj)
+  {
+    assert(self !is null);
+    Literal l = frame.getLiteral(num);
+    assert(l.type == LType.String);
+    self.table[l.s] = obj;
+  }
+
   auto stringify(IndentedWriter iw)
   {
     iw.formattedWrite("Num Globals: %d\n", globals.length);
@@ -59,7 +79,7 @@ class State
     foreach(s; globals.keys.sort){
       iw.formattedWrite("%s: %s\n", s, globals[s]);
     }
-    iw.unindent;
+    iw.unindent();
     iw.formattedWrite("Num Frames:  %d\n", stack.length);
     iw.formattedWrite("Top frame:\n");
 

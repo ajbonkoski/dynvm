@@ -7,7 +7,14 @@ class DynObject
 {
   uint id;
   static uint next_id = 0;
+  DynObject[string] table;
+
   this(){ id = next_id++; }
+
+  override string toString()
+  {
+    return format("DynString(id=%d)", id);
+  }
 }
 
 class DynString : DynObject
@@ -39,6 +46,11 @@ struct DynObjectBuiltin
       case LType.String:  return new DynString(val.s);
       case LType.Int:     return new DynInt(val.i);
     }
+  }
+
+  static DynObject create(string T)() if(T == "object")
+  {
+    return new DynObject();
   }
 }
 

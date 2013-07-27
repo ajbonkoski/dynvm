@@ -19,7 +19,7 @@ void interpretCode(CodeObject co)
 
     final switch(inst.opcode)
     {
-      case IOpcode.LOADLITERAL:
+      case IOpcode.LITERAL:
         auto obj = state.getLiteralObj(inst.iABx.bx);
         state.setRegister(inst.iABx.a, obj);
         break;

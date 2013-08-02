@@ -6,5 +6,8 @@
 
 ## Binaries
 *.o
+*.pegc
+*.pegcc
+*.pyc
 dynvm
 dynvm-test

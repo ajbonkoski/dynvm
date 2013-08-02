@@ -1,3 +1,5 @@
+SUBDIRS = frontends
+
 DC = dmd
 FLAGS = -O -unittest
 
@@ -20,6 +22,8 @@ interpret/interpreter.d  \
 
 ALL = $(BIN)
 all: $(ALL)
+	@for dir in $(SUBDIRS) ; do \
+	echo $$dir ; $(MAKE) $(SILENT) -C $$dir all || exit 2; done
 
 $(BIN): $(SRC)
 	$(DC) $(FLAGS) -of$(BIN) $(SRC)
@@ -30,3 +34,5 @@ test: $(SRC)
 
 clean:
 	rm -f $(BIN) $(BIN_TEST) *.o
+	for dir in $(SUBDIRS); do \
+	echo $$dir ; $(MAKE) -C $$dir clean || exit 2; done

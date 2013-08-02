@@ -74,6 +74,7 @@ class State
 
   auto stringify(IndentedWriter iw)
   {
+    iw.formattedWrite("self: %s\n", self);
     iw.formattedWrite("Num Globals: %d\n", globals.length);
     iw.indent();
     foreach(s; globals.keys.sort){

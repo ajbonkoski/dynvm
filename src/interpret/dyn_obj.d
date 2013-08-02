@@ -13,7 +13,10 @@ class DynObject
 
   override string toString()
   {
-    return format("DynString(id=%d)", id);
+    string s = format("DynObject(id=%d", id);
+    foreach(k; table.keys.sort)
+      s ~= format(", %s=%s", k, table[k]);
+    return s ~ ")";
   }
 }
 

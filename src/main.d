@@ -12,9 +12,12 @@ int main(string args[])
       return -1;
     }
 
-    auto f = File(args[1], "r");
-    CodeObject co;
 
+    auto f = stdin;
+    if(args[1] != "-")
+      f = File(args[1], "r");
+
+    CodeObject co;
     try {
       co = assembleFile(f);
       writef("==== Loaded CodeObject ====\n%s\n", co);

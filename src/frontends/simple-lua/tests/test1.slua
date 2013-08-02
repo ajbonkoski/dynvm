@@ -1,0 +1,6 @@
+   global a  =  "fds"  
+  a = 56 ;  f = "dfsd";;     ;; 
+ ; ; ; ;  
+ g    =     {    }  
+ f = g.h 
+ g.  j = a

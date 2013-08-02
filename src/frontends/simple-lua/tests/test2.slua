@@ -1,0 +1,10 @@
+   global a  =  b  
+  b=a 
+ d = global g
+ global h = global j
+ h=k
+ h.g = k; k.l = h.y global h.l = global f.t; a=443324
+;b= "hello, world";
+ a = {};
+a.f = { };
+ a.g = "hi";

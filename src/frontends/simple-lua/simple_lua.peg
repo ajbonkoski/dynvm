@@ -1,0 +1,67 @@
+lib { simple_lua }
+
+Grammar     <- S (Expression S (';' S)* )+ EOI
+               { ''.join([a[0][0] for a in arg[1]]) + \
+                 lib.genEnd()  }
+
+Expression  <- AssignExpr
+               { arg[0][0] }
+
+AssignExpr  <- LValue S '=' S RValue
+               { arg[0][0][0].genAssign(arg[4][0][0]) }
+
+LValue      <- Variable
+               { arg[0][0] }
+
+RValue      <- Variable / Literal
+               { arg[0][0] }
+
+LAssignExpr <- Variable S '=' S Literal
+               { arg[0][0][0].genLoadLiteral(arg[4][0]) }
+
+OAssignExpr <- Variable S '=' S '{' S '}'
+               { arg[0][0][0].genNewObject() }
+
+Variable    <- MVariable / SVariable
+               { arg[0][0] }
+
+SVariable   <- GVariable / LVariable
+               { arg[0][0] }
+
+LVariable   <- Name
+               { [lib.Local(arg[0][0])] }
+
+GVariable   <- 'global' SR [a-z]
+               { [lib.Global(arg[2][0])] }
+
+MVariable   <- SVariable S '.' S Name
+               { [lib.Member(arg[0][0][0], arg[4][0])] }
+
+Literal     <- ObjLiteral / RawLiteral
+               { arg[0][0] }
+
+InstLiteral <- ObjLiteral
+               { arg[0][0] }
+
+ObjLiteral  <- '{' S '}'
+               { [lib.NewObjLiteral()] }
+
+RawLiteral  <- IntLiteral / StrLiteral
+               { [lib.Literal(arg[0][0])] }
+
+IntLiteral  <- [1-9][0-9]*
+               { '#' + arg[0][0] + \
+                 (''.join([a[0] for a in arg[1]]) if len(arg) > 1
+                 else '') }
+
+StrLiteral  <- '"' (!'"' .)* '"'
+               { '"'+''.join([a[1][0] for a in arg[1]])+'"' }
+
+Name        <- [a-z]
+               { arg[0][0] }
+
+
+
+EOL         <- '\r\n' / '\n' / '\r'
+SR          <- (' ' / '\t' / EOL)+
+S           <- (' ' / '\t' / EOL)*

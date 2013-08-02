@@ -13,11 +13,17 @@ class DynObject
 
   override string toString()
   {
-    string s = format("DynObject(id=%d", id);
+    return format("DynObject(id=%d%s)", id, toStringMembers());
+  }
+
+  string toStringMembers()
+  {
+    string s;
     foreach(k; table.keys.sort)
       s ~= format(", %s=%s", k, table[k]);
-    return s ~ ")";
+    return s;
   }
+
 }
 
 class DynString : DynObject
@@ -26,7 +32,7 @@ class DynString : DynObject
   this(string s_) { super(); s = s_; }
   override string toString()
   {
-    return format("DynString(id=%d, \"%s\")", id, s);
+    return format("DynString(id=%d, \"%s\"%s)", id, s, toStringMembers());
   }
 }
 
@@ -36,7 +42,7 @@ class DynInt : DynObject
   this(int i_) { super(); i = i_; }
   override string toString()
   {
-    return format("DynInt(id=%d, %d)", id, i);
+    return format("DynInt(id=%d, %d%s)", id, i, toStringMembers());
   }
 }
 

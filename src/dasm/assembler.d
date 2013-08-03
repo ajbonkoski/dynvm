@@ -24,6 +24,61 @@ auto iswhite(char c)
     return c == ' ' || c == '\t';
 }
 
+// respects spaces if inside quotes
+char[][] customSplit(char[] s)
+{
+  char[][] ret;
+  int n = 0;
+
+  enum State { IGNORE_WHITE, FIND_WHITE, INSIDE_QUOTE };
+  State state = State.IGNORE_WHITE;
+  ulong start = 0;
+
+  foreach(i; 0..s.length) {
+    char c = s[i];
+    final switch(state) {
+
+      case State.IGNORE_WHITE:
+        if(!c.iswhite) {
+          start = i;
+          state = (c == '"') ? State.INSIDE_QUOTE :
+                               State.FIND_WHITE;
+        }
+        break;
+
+      case State.FIND_WHITE:
+        if(c.iswhite) {
+          ret ~= s[start..i];
+          state = State.IGNORE_WHITE;
+        }
+        else if(c == '"') {
+          state = State.FIND_WHITE;
+        }
+        break;
+
+      case State.INSIDE_QUOTE:
+        if(c == '"') {
+          ret ~= s[start..i+1];
+          state = State.IGNORE_WHITE;
+        }
+        break;
+
+    }
+  }
+
+  // We shouldn;t be in the INSIDE_QUOTE state here
+  // this would mean there are mismatching quotes
+  if(state == State.INSIDE_QUOTE)
+    throw new DynAssemblerException("Quote mismatch in customSplit");
+
+  // if we run out of chars and we were in FIND_WHITE mode,
+  // its a valid field, so add it!
+  if(state == State.FIND_WHITE)
+    ret ~= s[start..$];
+
+  return ret;
+}
+
 class Line
 {
   char[][] fields;
@@ -32,7 +87,7 @@ class Line
 
   this(char[] line)
   {
-    fields = split(line);
+    fields = line.customSplit();
     if(fields[0][0..2] == ";;") {
       is_instruction = false;
       return;

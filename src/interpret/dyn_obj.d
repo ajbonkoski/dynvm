@@ -43,7 +43,14 @@ class DynObject
 class DynString : DynObject
 {
   string s;
-  this(string s_) { super(); s = s_; }
+  this(string s_)
+  {
+    super();
+    s = s_;
+
+    table["__op_add"] = new DynNativeBinFunc(&NativeBinStrConcat, this);
+  }
+
   override string toString()
   {
     return format("DynString(id=%d, \"%s\"%s)", id, s, toStringMembers());
@@ -104,30 +111,37 @@ class DynNativeBinFunc : DynFunc
 /*** Native Binary Functions ***/
 DynObject NativeBinIntAdd(DynObject a_, DynObject b_)
 {
-  DynInt a = cast(DynInt) a_;
-  DynInt b = cast(DynInt) b_;
+  auto a = cast(DynInt) a_;
+  auto b = cast(DynInt) b_;
   return new DynInt(a.i + b.i);
 }
 
 DynObject NativeBinIntSub(DynObject a_, DynObject b_)
 {
-  DynInt a = cast(DynInt) a_;
-  DynInt b = cast(DynInt) b_;
+  auto a = cast(DynInt) a_;
+  auto b = cast(DynInt) b_;
   return new DynInt(a.i - b.i);
 }
 
 DynObject NativeBinIntMul(DynObject a_, DynObject b_)
 {
-  DynInt a = cast(DynInt) a_;
-  DynInt b = cast(DynInt) b_;
+  auto a = cast(DynInt) a_;
+  auto b = cast(DynInt) b_;
   return new DynInt(a.i * b.i);
 }
 
 DynObject NativeBinIntDiv(DynObject a_, DynObject b_)
 {
-  DynInt a = cast(DynInt) a_;
-  DynInt b = cast(DynInt) b_;
+  auto a = cast(DynInt) a_;
+  auto b = cast(DynInt) b_;
   return new DynInt(a.i / b.i);
+}
+
+DynObject NativeBinStrConcat(DynObject a_, DynObject b_)
+{
+  auto a = cast(DynString) a_;
+  auto b = cast(DynString) b_;
+  return new DynString(a.s ~ b.s);
 }
 
 

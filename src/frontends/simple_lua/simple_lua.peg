@@ -5,16 +5,23 @@ Grammar     <- S (Expression S (';' S)* )+ EOI
                  lib.genEnd()  }
 
 Expression  <- AssignExpr /
-               BinOpExpr
+               BinOpExprEx
                { arg[0][0] }
 
-AssignExpr  <- LValue S '=' S RValue
+AssignExpr  <- LValue S '=' S SimpleExpr
                { arg[0][0][0].genAssign(arg[4][0][0]) }
+
+BinOpExprEx <- BinOpExpr
+               { arg[0][0][0].instr }
+
+SimpleExpr  <- BinOpExpr /
+               RValue
+               { arg[0][0] }
 
 BinOpExpr   <- RValue S BinOp S RValue
                { lib.genBinCall(arg[0][0][0], arg[2][0], arg[4][0][0]) }
 
-BinOp       <- '+' / '-'
+BinOp       <- '+' / '-' / '*' / '/'
                { arg[0][0] }
 
 LValue      <- Variable

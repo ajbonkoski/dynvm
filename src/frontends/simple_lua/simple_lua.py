@@ -12,6 +12,8 @@ def variableToRegister(variable):
 binOpNameMap = {
     '+': '__op_add',
     '-': '__op_sub',
+    '*': '__op_mul',
+    '/': '__op_div',
 }
 
 # r0,r1 are always considered the temp for this compiler
@@ -48,8 +50,8 @@ def genBinCall(val_a, op_name, val_b):
     arg_reg = getTempReg(1)
     instr += val_b.storeTo(arg_reg);
     dest_reg = call_reg  # replace the function ptr with the ret val
-    return instr + \
-           "    CALL           r"+dest_reg+"  r"+call_reg+"  r"+arg_reg+"\n"
+    instr += "    CALL           r"+dest_reg+"  r"+call_reg+"  r"+arg_reg+"\n"
+    return [Local(int(dest_reg), instr)]
 
 def genEnd():
     return "    RET            r0  r0\n"
@@ -74,7 +76,9 @@ class NewObjLiteral(Value):
 
 
 class Local(Value):
-    def __init__(self, val):
+    def __init__(self, val, instr=''):
+        self.instr = instr
+
         if type(val) == type(''):
             self.regnum = variableToRegister(val)
         elif type(val) == type(0):
@@ -83,10 +87,10 @@ class Local(Value):
             raise Exception("Local() constructor received invalid type")
 
     def genAssign(self, source):
-        return source.storeTo(self.regnum)
+        return self.instr + source.storeTo(self.regnum)
 
     def storeTo(self, dest_regnum):
-        return genMove(dest_regnum, self.regnum)
+        return self.instr + genMove(dest_regnum, self.regnum)
 
     def hasRegister(self):
         return True

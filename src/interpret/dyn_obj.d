@@ -43,14 +43,16 @@ class DynString : DynObject
 
 class DynInt : DynObject
 {
-  int i;
-  this(int i_)
+  long i;
+  this(long i_)
   {
     super();
     i = i_;
 
     table["__op_add"] = new DynNativeBinFunc(&NativeBinIntAdd, this);
     table["__op_sub"] = new DynNativeBinFunc(&NativeBinIntSub, this);
+    table["__op_mul"] = new DynNativeBinFunc(&NativeBinIntMul, this);
+    table["__op_div"] = new DynNativeBinFunc(&NativeBinIntDiv, this);
   }
 
   override string toString()
@@ -93,6 +95,20 @@ DynObject NativeBinIntSub(DynObject a_, DynObject b_)
   DynInt a = cast(DynInt) a_;
   DynInt b = cast(DynInt) b_;
   return new DynInt(a.i - b.i);
+}
+
+DynObject NativeBinIntMul(DynObject a_, DynObject b_)
+{
+  DynInt a = cast(DynInt) a_;
+  DynInt b = cast(DynInt) b_;
+  return new DynInt(a.i * b.i);
+}
+
+DynObject NativeBinIntDiv(DynObject a_, DynObject b_)
+{
+  DynInt a = cast(DynInt) a_;
+  DynInt b = cast(DynInt) b_;
+  return new DynInt(a.i / b.i);
 }
 
 

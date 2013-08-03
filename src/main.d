@@ -19,8 +19,8 @@ int main(string args[])
 
     CodeObject co;
     try {
+      writef("==== Assembling DynAsm ====\n");
       co = assembleFile(f);
-      writef("==== Loaded CodeObject ====\n%s\n", co);
     } catch(DynAssemblerException ex) {
       writeln(ex.msg);
       return -1;

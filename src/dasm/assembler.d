@@ -105,6 +105,7 @@ CodeObject assembleFile(File f)
     lineno = 0;
     foreach(l; f.byLine()) {
       lineno++;
+      writeln(l);
       if(l.length == 0)
         continue;
 

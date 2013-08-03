@@ -3,8 +3,8 @@ SUBDIRS = frontends
 DC = dmd
 FLAGS = -O -unittest
 
-DYNVM_BIN = dynvm
-#DYNVM_BIN_TEST = dynvm-test
+DYNVM_BIN = bin/dynvm
+DYNVM_OBJ = bin/dynvm.o
 DYNVM_SRC =               \
 common/common.d          \
 datastruct/stack.d       \
@@ -18,7 +18,8 @@ interpret/stack_frame.d  \
 interpret/state.d        \
 interpret/interpreter.d  \
 
-TESTER_BIN = tester
+TESTER_BIN = bin/tester
+TESTER_OBJ = bin/tester.o
 TESTER_SRC =             \
 tester_src/main.d        \
 
@@ -30,9 +31,11 @@ all: $(ALL)
 
 $(DYNVM_BIN): $(DYNVM_SRC)
 	$(DC) $(FLAGS) -of$@ $^
+	rm -f $(DYNVM_OBJ)
 
 $(TESTER_BIN): $(TESTER_SRC)
 	$(DC) $(FLAGS) -of$@ $^
+	rm -f $(TESTER_OBJ)
 
 # test: $(SRC)
 # 	$(DC) $(FLAGS) -unittest -of$(BIN_TEST) $(SRC)

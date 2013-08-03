@@ -53,7 +53,7 @@ class DynasmTest : Test
 
   override bool run()
   {
-    string cmd = format("./dynvm -s %s/%s | diff %s/%s -",
+    string cmd = format("dynvm -s %s/%s | diff %s/%s -",
                         TEST_DIR, testfile, TEST_DIR, ansfile);
     auto res = executeShell(cmd);
     success = (res.status == 0);
@@ -71,7 +71,7 @@ class SluaTest : Test
 
   override bool run()
   {
-    string cmd = format("cat %s/%s | ./slua - | ./dynvm -s - | diff %s/%s -",
+    string cmd = format("cat %s/%s | slua - | dynvm -s - | diff %s/%s -",
                         TEST_DIR, testfile, TEST_DIR, ansfile);
     auto res = executeShell(cmd);
     success = (res.status == 0);
@@ -100,7 +100,8 @@ Test[string] test_map;
 void build_test_map()
 {
 
-  foreach(dirent; dirEntries(TEST_DIR, SpanMode.shallow)) {
+  auto dir = buildNormalizedPath(getcwd(), TEST_DIR);
+  foreach(dirent; dirEntries(dir, SpanMode.shallow)) {
     auto fname = dirent.name.baseName;
 
     // filter out the junk

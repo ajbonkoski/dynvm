@@ -3,4 +3,4 @@
 THISDIR=$(readlink -f .)
 MYDIR=$(dirname $(readlink -f $0))
 
-cd $MYDIR/frontends/simple_lua && pegvm -d 31 simple_lua.pegc $1
+cd $MYDIR/../frontends/simple_lua && pegvm -d 16 simple_lua.pegc $1

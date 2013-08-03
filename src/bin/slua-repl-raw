@@ -8,7 +8,7 @@ MYDIR=$(dirname $(readlink -f $0))
 printf "$PROMPT "
 while read -r LINE; do
     echo "$LINE" > $TMP
-    cd $MYDIR/frontends/simple_lua && pegvm -d 16 simple_lua.pegc $TMP | $MYDIR/dynvm -s -
+    cd $MYDIR/../frontends/simple_lua && pegvm -d 16 simple_lua.pegc $TMP | $MYDIR/dynvm -s -
     printf "$PROMPT "
 done
 

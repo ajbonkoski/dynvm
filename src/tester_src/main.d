@@ -5,6 +5,7 @@ import std.regex;
 import std.string;
 import std.process;
 import std.conv;
+import std.getopt;
 
 string TEST_DIR = "test";
 auto BLACKLIST = [regex("#.*#"), regex(".*~")];
@@ -30,6 +31,9 @@ abstract class Test
     _ansfile = af;
   }
 
+  bool success;
+  string output;
+
   bool valid(){ return testfile != "" && ansfile != ""; }
 
   // impl by subclass
@@ -47,7 +51,11 @@ class DynasmTest : Test
   {
     string cmd = format("./dynvm -s %s/%s | diff %s/%s -",
                         TEST_DIR, testfile, TEST_DIR, ansfile);
-    return executeShell(cmd).status == 0;
+    auto res = executeShell(cmd);
+    success = (res.status == 0);
+    output = res.output;
+
+    return success;
   }
 }
 
@@ -129,28 +137,53 @@ int run()
 {
   build_test_map();
 
-  writef("--------------------------------\n");
+  writef("================================\n");
   writef("Running Tester with %d tests:\n", test_map.length);
-  writef("--------------------------------\n");
+  writef("================================\n");
+  writef("\n");
 
   uint pass_count = 0;
   foreach(testname, test; test_map) {
     writef("Running '%s': ", testname, test.testfile, test.ansfile);
     bool passed = test.run();
     writef("%s\n", passed ? "PASSED" : "FAILED");
-    if(passed) pass_count++;
+
+    if(passed) {
+      pass_count++;
+    } else if(SHOW_OUTPUT_ON_FAILURE){
+      writef("--------------------------------\n");
+      writef("%s\n", test.output);
+    }
   }
 
   double perc = 100.0*(to!double(pass_count) / to!double(test_map.length));
-  writef("--------------------------------\n");
+  writef("\n");
+  writef("================================\n");
   writef("Pass Rate (%d/%d): %.2f\n", pass_count, test_map.length, perc);
 
   return pass_count == test_map.length ? 0 : 1;
 }
 
+bool SHOW_OUTPUT_ON_FAILURE = true;
 
-int main()
+int main(string[] args)
 {
+  bool silent  = false;
+  bool verbose = false;
+
+  getopt(args,
+         "silent|s",  &silent,
+         "verbose|v", &verbose);
+
+  if(silent && verbose) {
+    stderr.writeln("Error: --silent and --verbose cannot be used at the same time!");
+    return 1;
+  }
+
+  if(silent)  SHOW_OUTPUT_ON_FAILURE = false;
+  if(verbose) SHOW_OUTPUT_ON_FAILURE = true;
+
+
   try { return run(); }
   catch(TesterError ex) { stderr.writeln("ERROR: ", ex.msg); }
 

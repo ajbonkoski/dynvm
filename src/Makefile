@@ -25,6 +25,8 @@ tester_src/main.d        \
 
 ALL = $(DYNVM_BIN) $(TESTER_BIN)
 all: $(ALL)
+	@for dir in $(SUBDIRS) ; do \
+	echo $$dir ; $(MAKE) $(SILENT) -C $$dir all || exit 2; done
 
 $(DYNVM_BIN): $(DYNVM_SRC)
 	$(DC) $(FLAGS) -of$@ $^

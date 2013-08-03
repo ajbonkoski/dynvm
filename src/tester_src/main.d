@@ -12,6 +12,9 @@ auto BLACKLIST = [regex("#.*#"), regex(".*~")];
 string ANS_EXT = ".ans";
 uint SEPARATOR_SIZE = 45;
 
+string PASSED = "\033[32mPASSED\033[0m";
+string FAILED = "\033[31mFAILED\033[0m";
+
 class TesterError : Error { this(string s){ super(s); } }
 
 abstract class Test
@@ -161,7 +164,7 @@ int run()
   foreach(testname, test; test_map) {
     writef("Running %-30s ", format("'%s':", testname));
     bool passed = test.run();
-    writef("%s\n", passed ? "PASSED" : "FAILED");
+    writef("%s\n", passed ? PASSED : FAILED);
 
     if(passed) {
       pass_count++;

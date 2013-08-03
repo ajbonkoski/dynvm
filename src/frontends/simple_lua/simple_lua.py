@@ -21,28 +21,64 @@ binOpNameMap = {
 def getTempReg(which=0):
     return str(which)
 
+def stringify(s): return "\"{}\"".format(s)
+
+######################### INSTRUCTIONS ##############################
+C1_SP  = ' '*4
+C2_OP  = '{:15}'
+C3_REG = ' r{:5}'
+C4_BX  = ' {}'
+C4_REG = ' r{:5}'
+C5_REG = ' r{:5}'
+END    = '\n'
+
+def genInstr_iABx(opcode, reg, literal):
+    return (C1_SP + C2_OP + C3_REG + C4_BX + END).format(
+                    opcode,   reg,  literal)
+
+def genInstr_iA(opcode, rega):
+    return (C1_SP + C2_OP + C3_REG + END).format(
+                    opcode,   rega)
+
+def genInstr_iAB(opcode, rega, regb):
+    return (C1_SP + C2_OP + C3_REG + C4_REG + END).format(
+                    opcode,   rega,    regb)
+
+def genInstr_iABC(opcode, rega, regb, regc):
+    return (C1_SP + C2_OP + C3_REG + C4_REG + C5_REG + END).format(
+                    opcode,   rega,    regb,    regc)
+
+#####################################################################
+
 def genLoadLiteral(regnum, literal):
-    return "    LITERAL        r" + regnum + "  " + literal + "\n"
-
-def genNewObject(regnum):
-    return "    NEWOBJECT      r" + regnum + "\n"
-
-def genStoreGlobal(regnum, name):
-    return "    STOREGLOBAL    r"+regnum + "  \"" + name + "\"\n"
+    return genInstr_iABx("LITERAL", regnum, literal)
 
 def genLoadGlobal(regnum, name):
-    return "    LOADGLOBAL     r"+regnum + "  \"" + name + "\"\n"
+    return genInstr_iABx("LOADGLOBAL", regnum, stringify(name))
 
-def genGetMember(self_regnum, dest_regnum, name):
-    return "    SETSELF        r"+self_regnum+"\n" + \
-           "    GET            r"+dest_regnum+"  \""+name+"\"\n"
-
-def genSetMember(self_regnum, dest_regnum, name):
-    return "    SETSELF        r"+self_regnum+"\n" + \
-           "    SET            r"+dest_regnum+"  \""+name+"\"\n"
+def genStoreGlobal(regnum, name):
+    return genInstr_iABx("STOREGLOBAL", regnum, stringify(name))
 
 def genMove(dest_regnum, src_regnum):
-    return "    MOVE           r"+dest_regnum+"  r"+src_regnum+"\n"
+    return genInstr_iAB("MOVE", dest_regnum, src_regnum)
+
+def genRet(regnum):
+    return genInstr_iA("RET", regnum)
+
+def genNewObject(regnum):
+    return genInstr_iA("NEWOBJECT", regnum)
+
+def genGetMember(self_regnum, dest_regnum, name):
+    return genInstr_iA  ("SETSELF", self_regnum) + \
+           genInstr_iABx("GET",     dest_regnum, stringify(name))
+
+def genSetMember(self_regnum, dest_regnum, name):
+    return genInstr_iA  ("SETSELF", self_regnum) + \
+           genInstr_iABx("SET",     dest_regnum, stringify(name))
+
+def genCall(dest_regnum, call_regnum, arg_regnum):
+    return genInstr_iABC("CALL", dest_regnum, call_regnum, arg_regnum)
+
 
 def genBinCall(val_a, ops_list): #op_name, val_b):
 
@@ -56,14 +92,13 @@ def genBinCall(val_a, ops_list): #op_name, val_b):
         instr += m.storeTo(call_reg);
         instr += val_b.storeTo(arg_reg);
         global lastAssignedReg; lastAssignedReg = dest_reg
-        instr += "    CALL           r"+dest_reg+"  r"+call_reg+"  r"+arg_reg+"\n"
+        instr += genCall(dest_reg, call_reg, arg_reg)
         val_a = Local(int(dest_reg), instr)
 
     return [val_a]
 
 
-def genEnd():
-    return "    RET            r"+lastAssignedReg+"\n"
+def genEnd(): return genRet(lastAssignedReg);
 
 
 class Value:

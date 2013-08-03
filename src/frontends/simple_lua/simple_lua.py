@@ -65,28 +65,38 @@ def genInstr_iMb(opcode, self_reg, dest_reg, literal):
     return genInstr("SETSELF",  self_reg) + \
            genInstr(opcode[:3], dest_reg, literal)
 
+LOAD_YES = 1
+LOAD_NO = 2
+
 instructions = {
-    'LITERAL':      genInstr_iABx,
-    'LOADGLOBAL':   genInstr_iABx,
-    'STOREGLOBAL':  genInstr_iABx,
-    'MOVE':         genInstr_iAB,
-    'RET':          genInstr_iA,
-    'NEWOBJECT':    genInstr_iA,
-    'SETSELF':      genInstr_iA,
-    'GET':          genInstr_iABx,
-    'SET':          genInstr_iABx,
-    'GETMEMBER':    genInstr_iMb,
-    'SETMEMBER':    genInstr_iMb,
-    'CALL':         genInstr_iABC,
+    'LITERAL':      (genInstr_iABx, LOAD_YES),
+    'LOADGLOBAL':   (genInstr_iABx, LOAD_YES),
+    'STOREGLOBAL':  (genInstr_iABx, LOAD_NO),
+    'MOVE':         (genInstr_iAB,  LOAD_YES),
+    'RET':          (genInstr_iA,   LOAD_NO),
+    'NEWOBJECT':    (genInstr_iA,   LOAD_YES),
+    'SETSELF':      (genInstr_iA,   LOAD_NO),
+    'GET':          (genInstr_iABx, LOAD_YES),
+    'SET':          (genInstr_iABx, LOAD_NO),
+    'GETMEMBER':    (genInstr_iMb,  LOAD_NO),  ## aggregate type (ignore the LOAD settings)
+    'SETMEMBER':    (genInstr_iMb,  LOAD_NO),
+    'CALL':         (genInstr_iABC, LOAD_YES),
 }
 
 class UnknownInstruction(Exception): pass
 def genInstr(*args):
-    assert len(args) >= 0
+    assert len(args) >= 2
     opcode = args[0]
+    rega = args[1]
+
     if opcode not in instructions:
         raise UnknownInstruction(opcode)
-    return instructions[opcode](opcode, *args[1:])
+    f, ld = instructions[opcode]
+
+    instr = f(opcode, *args[1:])
+    if ld == LOAD_YES:
+        global lastAssignedReg; lastAssignedReg = rega
+    return instr
 
 #####################################################################
 
@@ -104,7 +114,6 @@ def genBinCall(val_a, ops_list):
         m = Member(val_a, binOpNameMap[op_name])
         instr += m.storeTo(call_reg)
         instr += val_b.storeTo(arg_reg)
-        global lastAssignedReg; lastAssignedReg = dest_reg
         instr += genInstr("CALL", dest_reg, call_reg, arg_reg)
         val_a = Local.fromReg(dest_reg, instr)
 
@@ -172,7 +181,6 @@ class Literal(RValue):
         self.val = val
 
     def storeTo(self, dest_regnum):
-        global lastAssignedReg; lastAssignedReg = dest_regnum
         return genInstr("LITERAL", dest_regnum, self.val)
 
 
@@ -210,7 +218,6 @@ class Local(LValue):
 
     @assert_init
     def genAssign(self, source):
-        global lastAssignedReg; lastAssignedReg = self.regnum
         return self.instr + source.storeTo(self.regnum)
 
     @assert_init
@@ -224,7 +231,6 @@ class Global(LValue):
 
     def genAssign(self, source):
         regnum = self.resolveSrcReg(source);
-        global lastAssignedReg; lastAssignedReg = regnum
         return self.instr + genInstr("STOREGLOBAL", regnum, stringify(self.name))
 
     def storeTo(self, regnum):
@@ -276,5 +282,4 @@ class Member(LValue):
     def genAssign(self, source):
         regnum = self.resolveSrcReg(source);
         self_regnum = self.var.getRegister()
-        global lastAssignedReg; lastAssignedReg = regnum
         return self.instr + genInstr("SETMEMBER", self_regnum, regnum, stringify(self.name))

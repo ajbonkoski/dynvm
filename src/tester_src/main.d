@@ -162,7 +162,8 @@ int run()
   writef("\n");
 
   uint pass_count = 0;
-  foreach(testname, test; test_map) {
+  foreach(testname; test_map.keys.sort) {
+    auto test = test_map[testname];
     writef("Running %-30s ", format("'%s':", testname));
     bool passed = test.run();
     writef("%s\n", passed ? PASSED : FAILED);

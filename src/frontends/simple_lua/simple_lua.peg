@@ -18,8 +18,9 @@ SimpleExpr  <- BinOpExpr /
                RValue
                { arg[0][0] }
 
-BinOpExpr   <- RValue S BinOp S RValue
-               { lib.genBinCall(arg[0][0][0], arg[2][0], arg[4][0][0]) }
+BinOpExpr   <- RValue (S BinOp S RValue)+
+               { lib.genBinCall(arg[0][0][0],
+                  [(a[1][0], a[3][0][0]) for a in arg[1]]) }
 
 BinOp       <- '+' / '-' / '*' / '/'
                { arg[0][0] }

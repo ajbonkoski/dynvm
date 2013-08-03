@@ -44,16 +44,23 @@ def genSetMember(self_regnum, dest_regnum, name):
 def genMove(dest_regnum, src_regnum):
     return "    MOVE           r"+dest_regnum+"  r"+src_regnum+"\n"
 
-def genBinCall(val_a, op_name, val_b):
-    m = Member(val_a, binOpNameMap[op_name])
+def genBinCall(val_a, ops_list): #op_name, val_b):
+
     call_reg = getTempReg(0)
-    instr = m.storeTo(call_reg);
-    arg_reg = getTempReg(1)
-    instr += val_b.storeTo(arg_reg);
     dest_reg = call_reg  # replace the function ptr with the ret val
-    global lastAssignedReg; lastAssignedReg = dest_reg
-    instr += "    CALL           r"+dest_reg+"  r"+call_reg+"  r"+arg_reg+"\n"
-    return [Local(int(dest_reg), instr)]
+    arg_reg = getTempReg(1)
+    instr = ''
+
+    for op_name, val_b in ops_list:
+        m = Member(val_a, binOpNameMap[op_name])
+        instr += m.storeTo(call_reg);
+        instr += val_b.storeTo(arg_reg);
+        global lastAssignedReg; lastAssignedReg = dest_reg
+        instr += "    CALL           r"+dest_reg+"  r"+call_reg+"  r"+arg_reg+"\n"
+        val_a = Local(int(dest_reg), instr)
+
+    return [val_a]
+
 
 def genEnd():
     return "    RET            r"+lastAssignedReg+"\n"

@@ -1,6 +1,7 @@
 module interpret.dyn_obj;
 
 import std.string;
+import std.algorithm;
 import dasm.literal;
 
 class DynObject
@@ -24,8 +25,11 @@ class DynObject
   string toStringMembers()
   {
     string s;
-    foreach(k; table.keys.sort)
+    foreach(k; table.keys.sort) {
+      if(k.startsWith("__op_"))
+        continue;
       s ~= format(", '%s'=%s", k, table[k]);
+    }
     return s;
   }
 

@@ -10,6 +10,10 @@ def variableToRegister(variable):
         nextReg += 1
     return str(varMap[variable])
 
+# r0,r1 are always considered the temp for this compiler
+def getTempReg(which=0):
+    return str(which)
+
 binOpNameMap = {
     '+': '__op_add',
     '-': '__op_sub',
@@ -17,11 +21,6 @@ binOpNameMap = {
     '/': '__op_div',
 }
 
-# r0,r1 are always considered the temp for this compiler
-def getTempReg(which=0):
-    return str(which)
-
-def stringify(s): return "\"{}\"".format(s)
 
 ######################### INSTRUCTIONS ##############################
 C1_SP  = ' '*4
@@ -48,36 +47,36 @@ def genInstr_iABC(opcode, rega, regb, regc):
     return (C1_SP + C2_OP + C3_REG + C4_REG + C5_REG + END).format(
                     opcode,   rega,    regb,    regc)
 
+def genInstr_iMb(opcode, self_reg, dest_reg, literal):
+    return genInstr("SETSELF",  self_reg) + \
+           genInstr(opcode[:3], dest_reg, literal)
+
+instructions = {
+    'LITERAL':      genInstr_iABx,
+    'LOADGLOBAL':   genInstr_iABx,
+    'STOREGLOBAL':  genInstr_iABx,
+    'MOVE':         genInstr_iAB,
+    'RET':          genInstr_iA,
+    'NEWOBJECT':    genInstr_iA,
+    'SETSELF':      genInstr_iA,
+    'GET':          genInstr_iABx,
+    'SET':          genInstr_iABx,
+    'GETMEMBER':    genInstr_iMb,
+    'SETMEMBER':    genInstr_iMb,
+    'CALL':         genInstr_iABC,
+}
+
+class UnknownInstruction(Exception): pass
+def genInstr(*args):
+    assert len(args) >= 0
+    opcode = args[0]
+    if opcode not in instructions:
+        raise UnknownInstruction(opcode)
+    return instructions[opcode](opcode, *args[1:])
+
 #####################################################################
 
-def genLoadLiteral(regnum, literal):
-    return genInstr_iABx("LITERAL", regnum, literal)
 
-def genLoadGlobal(regnum, name):
-    return genInstr_iABx("LOADGLOBAL", regnum, stringify(name))
-
-def genStoreGlobal(regnum, name):
-    return genInstr_iABx("STOREGLOBAL", regnum, stringify(name))
-
-def genMove(dest_regnum, src_regnum):
-    return genInstr_iAB("MOVE", dest_regnum, src_regnum)
-
-def genRet(regnum):
-    return genInstr_iA("RET", regnum)
-
-def genNewObject(regnum):
-    return genInstr_iA("NEWOBJECT", regnum)
-
-def genGetMember(self_regnum, dest_regnum, name):
-    return genInstr_iA  ("SETSELF", self_regnum) + \
-           genInstr_iABx("GET",     dest_regnum, stringify(name))
-
-def genSetMember(self_regnum, dest_regnum, name):
-    return genInstr_iA  ("SETSELF", self_regnum) + \
-           genInstr_iABx("SET",     dest_regnum, stringify(name))
-
-def genCall(dest_regnum, call_regnum, arg_regnum):
-    return genInstr_iABC("CALL", dest_regnum, call_regnum, arg_regnum)
 
 
 def genBinCall(val_a, ops_list): #op_name, val_b):
@@ -92,14 +91,19 @@ def genBinCall(val_a, ops_list): #op_name, val_b):
         instr += m.storeTo(call_reg);
         instr += val_b.storeTo(arg_reg);
         global lastAssignedReg; lastAssignedReg = dest_reg
-        instr += genCall(dest_reg, call_reg, arg_reg)
+        instr += genInstr("CALL", dest_reg, call_reg, arg_reg)
         val_a = Local(int(dest_reg), instr)
 
     return [val_a]
 
 
-def genEnd(): return genRet(lastAssignedReg);
+def genEnd():
+    return genInstr("RET", lastAssignedReg);
 
+
+
+
+def stringify(s): return "\"{}\"".format(s)
 
 class Value:
     def hasRegister(self):
@@ -111,12 +115,12 @@ class Literal(Value):
         self.instr = ''
 
     def storeTo(self, dest_regnum):
-        return genLoadLiteral(dest_regnum, self.val)
+        return genInstr("LITERAL", dest_regnum, self.val)
 
 
 class NewObjLiteral(Value):
     def storeTo(self, dest_regnum):
-        return genNewObject(dest_regnum)
+        return genInstr("NEWOBJECT", dest_regnum)
 
 
 class Local(Value):
@@ -135,7 +139,7 @@ class Local(Value):
         return self.instr + source.storeTo(self.regnum)
 
     def storeTo(self, dest_regnum):
-        return self.instr + genMove(dest_regnum, self.regnum)
+        return self.instr + genInstr("MOVE", dest_regnum, self.regnum)
 
     def hasRegister(self):
         return True
@@ -158,10 +162,10 @@ class Global(Value):
             regnum = source.getRegister()
 
         global lastAssignedReg; lastAssignedReg = regnum
-        return instr + genStoreGlobal(regnum, self.name)
+        return instr + genInstr("STOREGLOBAL", regnum, stringify(self.name))
 
     def storeTo(self, regnum):
-        return genLoadGlobal(regnum, self.name)
+        return genInstr("LOADGLOBAL", regnum, stringify(self.name))
 
 
 class Member(Value):
@@ -180,7 +184,7 @@ class Member(Value):
 
     def storeTo(self, dest_regnum):
         self_regnum = self.var.getRegister()
-        return self.instr + genGetMember(self_regnum, dest_regnum, self.name)
+        return self.instr + genInstr("GETMEMBER", self_regnum, dest_regnum, stringify(self.name))
 
     def genAssign(self, source):
         if not source.hasRegister():
@@ -192,4 +196,4 @@ class Member(Value):
 
         self_regnum = self.var.getRegister()
         global lastAssignedReg; lastAssignedReg = regnum
-        return self.instr + genSetMember(self_regnum, regnum, self.name)
+        return self.instr + genInstr("SETMEMBER", self_regnum, regnum, stringify(self.name))

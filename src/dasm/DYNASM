@@ -18,8 +18,12 @@ G[n]    Access the set of globals with n as the index
 
 OPCODE(layout)      fieldA     fieldB     fieldC    |  pseudocode
 ----------------------------------------------------------------------
-LOADLITERAL(iABx)   register   literal              |  R[A] = L[B]
+LITERAL(iABx)       register   literal              |  R[A] = L[B]
 LOADGLOBAL(iABx)    register   string               |  R[A] = G[B]
 STOREGLOBAL(iABx)   register   string               |  G[B] = R[A]
 MOVE(iABC)          register   register             |  R[A] = R[B]
 RET(iABC)           register   register             |  return R[A]...R[A+B-1], B == 0 means "return nothing"
+NEWOBJECT(iA)       register                        |  R[A] = new object()
+SETSELF(iA)         register                        |  self = R[A] (required before a MEMBER ACCESS OPCODE)
+GET(iABx)           register   string               |  R[A] = self.LOOKUP[B]
+SET(iABx)           register   string               |  self.LOOKUP[B] = R[A]

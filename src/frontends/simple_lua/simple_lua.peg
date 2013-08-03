@@ -8,21 +8,27 @@ Expression  <- AssignExpr /
                BinOpExprEx
                { arg[0][0] }
 
-AssignExpr  <- LValue S '=' S SimpleExpr
+AssignExpr  <- LValue S '=' S BinOpExprP1
                { arg[0][0][0].genAssign(arg[4][0][0]) }
 
-BinOpExprEx <- BinOpExpr
+BinOpExprEx <- BinOpExprP1
                { arg[0][0][0].instr }
 
-SimpleExpr  <- BinOpExpr /
-               RValue
+BinOpExprP1 <- BinOpExprP2 (S BinOpP1 S BinOpExprP2)*
+               { lib.genBinCall(arg[0][0][0],
+                  [(a[1][0], a[3][0][0]) for a in (arg[1] if len(arg) > 1 else [])]) }
+
+BinOpP1     <- '+' / '-'
                { arg[0][0] }
 
-BinOpExpr   <- RValue (S BinOp S RValue)+
+BinOpExprP2 <- BinOpExprP3 (S BinOpP2 S BinOpExprP3)*
                { lib.genBinCall(arg[0][0][0],
-                  [(a[1][0], a[3][0][0]) for a in arg[1]]) }
+                  [(a[1][0], a[3][0][0]) for a in (arg[1] if len(arg) > 1 else [])]) }
 
-BinOp       <- '+' / '-' / '*' / '/'
+BinOpP2     <- '*' / '/'
+               { arg[0][0] }
+
+BinOpExprP3 <- RValue
                { arg[0][0] }
 
 LValue      <- Variable
@@ -30,12 +36,6 @@ LValue      <- Variable
 
 RValue      <- Variable / Literal
                { arg[0][0] }
-
-LAssignExpr <- Variable S '=' S Literal
-               { arg[0][0][0].genLoadLiteral(arg[4][0]) }
-
-OAssignExpr <- Variable S '=' S '{' S '}'
-               { arg[0][0][0].genNewObject() }
 
 Variable    <- MVariable / SVariable
                { arg[0][0] }

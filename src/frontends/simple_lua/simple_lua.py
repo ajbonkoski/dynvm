@@ -1,4 +1,3 @@
-
 varMap = {}
 nextReg = 0
 lastAssignedReg = -1
@@ -99,12 +98,12 @@ def genBinCall(val_a, ops_list):
     call_reg = allocTempReg()
     dest_reg = call_reg  # replace the function ptr with the ret val
     arg_reg = allocTempReg()
-    instr = ''
 
     for op_name, val_b in ops_list:
+        instr = ''
         m = Member(val_a, binOpNameMap[op_name])
-        instr += m.storeTo(call_reg);
-        instr += val_b.storeTo(arg_reg);
+        instr += m.storeTo(call_reg)
+        instr += val_b.storeTo(arg_reg)
         global lastAssignedReg; lastAssignedReg = dest_reg
         instr += genInstr("CALL", dest_reg, call_reg, arg_reg)
         val_a = Local.fromReg(dest_reg, instr)
@@ -228,16 +227,16 @@ class Global(LValue):
 class Member(LValue):
     def __init__(self, var, name):
         LValue.__init__(self)
+        assert(isinstance(var, Value))
         self.name = name
+        self.var = var
+        self.instr = var.instr
 
         # if this is a member, of a member, generate a load
         if not isinstance(var, Local):
             regnum = allocTempReg()
             self.instr += var.storeTo(regnum)
             self.var = Local.fromReg(regnum)
-
-        else:
-            self.var = var
 
     def storeTo(self, dest_regnum):
         self_regnum = self.var.getRegister()

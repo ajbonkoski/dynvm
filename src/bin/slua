@@ -3,4 +3,9 @@
 THISDIR=$(readlink -f .)
 MYDIR=$(dirname $(readlink -f $0))
 
-cd $MYDIR/../frontends/simple_lua && pegvm -d 16 simple_lua.pegc $1
+F=$1
+if [ "$1" != "-" ]; then
+    F=$THISDIR/$1
+fi
+
+cd $MYDIR/../frontends/simple_lua && pegvm -d 16 simple_lua.pegc $F

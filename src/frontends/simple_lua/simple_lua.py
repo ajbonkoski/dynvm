@@ -1,6 +1,6 @@
 
 varMap = {}
-nextReg = 2
+nextReg = 0
 lastAssignedReg = -1
 
 def variableToRegister(variable):
@@ -10,9 +10,25 @@ def variableToRegister(variable):
         nextReg += 1
     return str(varMap[variable])
 
-# r0,r1 are always considered the temp for this compiler
-def getTempReg(which=0):
-    return str(which)
+
+### Temp Registers are allocated on demand and pooled/reused
+### However, once a temp, always a temp
+TEMP_REG_PREFIX = '__temp_reg'
+nextTemp = 0
+tempRegPool = []
+
+def allocTempReg():
+    global tempRegPool, nextTemp, TEMP_REG_PREFIX
+    if len(tempRegPool) > 0:
+        return tempRegPool.pop()
+
+    ## pool is empty... Allocate
+    name = TEMP_REG_PREFIX + str(nextTemp)
+    nextTemp += 1
+    return variableToRegister(name)
+
+def freeTempReg(reg):
+    tempRegPool.append(reg)
 
 binOpNameMap = {
     '+': '__op_add',
@@ -80,9 +96,9 @@ def genInstr(*args):
 
 def genBinCall(val_a, ops_list):
 
-    call_reg = getTempReg(0)
+    call_reg = allocTempReg()
     dest_reg = call_reg  # replace the function ptr with the ret val
-    arg_reg = getTempReg(1)
+    arg_reg = allocTempReg()
     instr = ''
 
     for op_name, val_b in ops_list:
@@ -121,7 +137,7 @@ class Value:
            can be found. It attempts to avoid allocating excess
            temporary registers."""
         if not src.hasRegister():
-            regnum = getTempReg()
+            regnum = allocTempReg()
             self.instr += src.storeTo(regnum)
         else:
             regnum = src.getRegister()
@@ -216,7 +232,7 @@ class Member(LValue):
 
         # if this is a member, of a member, generate a load
         if not isinstance(var, Local):
-            regnum = getTempReg()
+            regnum = allocTempReg()
             self.instr += var.storeTo(regnum)
             self.var = Local.fromReg(regnum)
 

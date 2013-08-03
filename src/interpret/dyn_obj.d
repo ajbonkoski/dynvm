@@ -16,11 +16,16 @@ class DynObject
     return format("DynObject(id=%d%s)", id, toStringMembers());
   }
 
+  DynObject call(DynObject[] args)
+  {
+    assert(0, "Call attempted on uncallable DynObject");
+  }
+
   string toStringMembers()
   {
     string s;
     foreach(k; table.keys.sort)
-      s ~= format(", %s=%s", k, table[k]);
+      s ~= format(", '%s'=%s", k, table[k]);
     return s;
   }
 
@@ -39,12 +44,57 @@ class DynString : DynObject
 class DynInt : DynObject
 {
   int i;
-  this(int i_) { super(); i = i_; }
+  this(int i_)
+  {
+    super();
+    i = i_;
+
+    table["__op_add"] = new DynNativeBinFunc(&NativeBinIntAdd, this);
+    table["__op_sub"] = new DynNativeBinFunc(&NativeBinIntSub, this);
+  }
+
   override string toString()
   {
     return format("DynInt(id=%d, %d%s)", id, i, toStringMembers());
   }
 }
+
+abstract class DynFunc : DynObject {}
+
+alias DynObject function(DynObject a, DynObject b) NativeBinFunc;
+class DynNativeBinFunc : DynFunc
+{
+  NativeBinFunc func;
+  DynObject bind;
+  this(NativeBinFunc func_, DynObject bind_){ super(); func = func_; bind = bind_; }
+
+  override DynObject call(DynObject[] args)
+  {
+    assert(args.length == 1);
+    return func(bind, args[0]);
+  }
+
+  override string toString()
+  {
+    return format("DynNativeBinFunc(id=%d)", id);
+  }
+}
+
+/*** Native Binary Functions ***/
+DynObject NativeBinIntAdd(DynObject a_, DynObject b_)
+{
+  DynInt a = cast(DynInt) a_;
+  DynInt b = cast(DynInt) b_;
+  return new DynInt(a.i + b.i);
+}
+
+DynObject NativeBinIntSub(DynObject a_, DynObject b_)
+{
+  DynInt a = cast(DynInt) a_;
+  DynInt b = cast(DynInt) b_;
+  return new DynInt(a.i - b.i);
+}
+
 
 struct DynObjectBuiltin
 {

@@ -8,10 +8,8 @@ import dasm.instructions;
 import interpret.dyn_obj;
 import interpret.state;
 
-void interpretCode(CodeObject co)
+private void runLoop(State state, CodeObject co)
 {
-  auto state = new State(co);
-
  EXECLOOP:
   while(true) {
     auto inst = state.fetchInstr();
@@ -59,10 +57,34 @@ void interpretCode(CodeObject co)
         auto obj = state.getRegister(inst.iABx.a);
         state.selfSet(inst.iABx.bx, obj);
         break;
+
+      case IOpcode.CALL:
+        DynObject[] args;
+        uint arg_num = inst.iABC.b+1;
+        uint arg_end = inst.iABC.c;
+        foreach(i; arg_num..arg_end+1)
+          args ~= state.getRegister(arg_num);
+
+        auto obj = state.getRegister(inst.iABC.b).call(args);
+        state.setRegister(inst.iABC.a, obj);
+        break;
     }
   }
+}
 
-  writeln("Finished!");
+
+void interpretCode(CodeObject co)
+{
+  auto state = new State(co);
+
+  try {
+    state.runLoop(co);
+  } catch(Throwable t) {
+    writeln("==== CRASH: ====");
+    writeln(t.msg);
+    writeln(t.info);
+  }
+
   writeln("==== Final State: ====");
   writeln(state.stringify(new IndentedWriter(4)).data);
 }

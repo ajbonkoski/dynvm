@@ -4,11 +4,18 @@ Grammar     <- S (Expression S (';' S)* )+ EOI
                { ''.join([a[0][0] for a in arg[1]]) + \
                  lib.genEnd()  }
 
-Expression  <- AssignExpr
+Expression  <- AssignExpr /
+               BinOpExpr
                { arg[0][0] }
 
 AssignExpr  <- LValue S '=' S RValue
                { arg[0][0][0].genAssign(arg[4][0][0]) }
+
+BinOpExpr   <- RValue S BinOp S RValue
+               { lib.genBinCall(arg[0][0][0], arg[2][0], arg[4][0][0]) }
+
+BinOp       <- '+' / '-'
+               { arg[0][0] }
 
 LValue      <- Variable
                { arg[0][0] }

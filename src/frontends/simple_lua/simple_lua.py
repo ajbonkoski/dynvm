@@ -1,6 +1,6 @@
 
 varMap = {}
-nextReg = 1
+nextReg = 2
 
 def variableToRegister(variable):
     global varMap, nextReg
@@ -9,8 +9,14 @@ def variableToRegister(variable):
         nextReg += 1
     return str(varMap[variable])
 
-def getTempReg():
-    return str(0) # r0 is always considered the temp for this compiler
+binOpNameMap = {
+    '+': '__op_add',
+    '-': '__op_sub',
+}
+
+# r0,r1 are always considered the temp for this compiler
+def getTempReg(which=0):
+    return str(which)
 
 def genLoadLiteral(regnum, literal):
     return "    LITERAL        r" + regnum + "  " + literal + "\n"
@@ -35,6 +41,16 @@ def genSetMember(self_regnum, dest_regnum, name):
 def genMove(dest_regnum, src_regnum):
     return "    MOVE           r"+dest_regnum+"  r"+src_regnum+"\n"
 
+def genBinCall(val_a, op_name, val_b):
+    m = Member(val_a, binOpNameMap[op_name])
+    call_reg = getTempReg(0)
+    instr = m.storeTo(call_reg);
+    arg_reg = getTempReg(1)
+    instr += val_b.storeTo(arg_reg);
+    dest_reg = call_reg  # replace the function ptr with the ret val
+    return instr + \
+           "    CALL           r"+dest_reg+"  r"+call_reg+"  r"+arg_reg+"\n"
+
 def genEnd():
     return "    RET            r0  r0\n"
 
@@ -46,6 +62,7 @@ class Value:
 class Literal(Value):
     def __init__(self, val):
         self.val = val
+        self.instr = ''
 
     def storeTo(self, dest_regnum):
         return genLoadLiteral(dest_regnum, self.val)
@@ -113,7 +130,7 @@ class Member(Value):
 
     def storeTo(self, dest_regnum):
         self_regnum = self.var.getRegister()
-        return genGetMember(self_regnum, dest_regnum, self.name)
+        return self.instr + genGetMember(self_regnum, dest_regnum, self.name)
 
     def genAssign(self, source):
         if not source.hasRegister():

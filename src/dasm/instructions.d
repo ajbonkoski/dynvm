@@ -16,7 +16,8 @@ enum IOpcode
     NEWOBJECT,
     SETSELF,
     GET,
-    SET
+    SET,
+    CALL,
 }
 
 private struct IStruct(Fields...) { mixin(bitfields!(Fields)); }
@@ -33,6 +34,7 @@ IFormat[IOpcode.max+1] instrTable =
     IOpcode.SETSELF:     IFormat.iA,
     IOpcode.GET:         IFormat.iABx,
     IOpcode.SET:         IFormat.iABx,
+    IOpcode.CALL:        IFormat.iABC,
 ];
 
 union IData

@@ -1,0 +1,13 @@
+
+   a = {}
+   a.b = 7
+   a.c = 8
+   a.d = 4*5
+
+   q = a.b
+   r = a.c
+   s = a.d
+   t = q*r
+   a.e = t*s
+
+   d = a.e

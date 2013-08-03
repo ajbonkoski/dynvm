@@ -8,12 +8,12 @@ import dasm.instructions;
 import interpret.dyn_obj;
 import interpret.state;
 
-private void runLoop(State state, CodeObject co)
+private void runLoop(State state, CodeObject co, bool silent)
 {
  EXECLOOP:
   while(true) {
     auto inst = state.fetchInstr();
-    writeln(inst.toString());
+    if(!silent) writeln(inst.toString());
 
     final switch(inst.opcode)
     {
@@ -74,18 +74,22 @@ private void runLoop(State state, CodeObject co)
 }
 
 
-void interpretCode(CodeObject co)
+void interpretCode(CodeObject co, bool silent)
 {
   auto state = new State(co);
 
   try {
-    state.runLoop(co);
+    state.runLoop(co, silent);
   } catch(Throwable t) {
     writeln("==== CRASH: ====");
     writeln(t.msg);
     writeln(t.info);
   }
 
-  writeln("==== Final State: ====");
-  writeln(state.stringify(new IndentedWriter(4)).data);
+  writeln("Result: ", state.ret.pretty());
+
+  if(!silent) {
+    writeln("==== Final State: ====");
+    writeln(state.stringify(new IndentedWriter(4)).data);
+  }
 }

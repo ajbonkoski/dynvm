@@ -98,14 +98,14 @@ uint parseLiteral(CodeObject co, const char[] s)
   }
 }
 
-CodeObject assembleFile(File f)
+CodeObject assembleFile(File f, bool silent)
 {
     CodeObject co = new CodeObject();
 
     lineno = 0;
     foreach(l; f.byLine()) {
       lineno++;
-      writeln(l);
+      if(!silent) writeln(l);
       if(l.length == 0)
         continue;
 

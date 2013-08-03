@@ -17,6 +17,11 @@ class DynObject
     return format("DynObject(id=%d%s)", id, toStringMembers());
   }
 
+  string pretty()
+  {
+    return format("DynObject(id=%s)", id);
+  }
+
   DynObject call(DynObject[] args)
   {
     assert(0, "Call attempted on uncallable DynObject");
@@ -43,6 +48,11 @@ class DynString : DynObject
   {
     return format("DynString(id=%d, \"%s\"%s)", id, s, toStringMembers());
   }
+
+  override string pretty()
+  {
+    return format("%s", s);
+  }
 }
 
 class DynInt : DynObject
@@ -62,6 +72,11 @@ class DynInt : DynObject
   override string toString()
   {
     return format("DynInt(id=%d, %d%s)", id, i, toStringMembers());
+  }
+
+  override string pretty()
+  {
+    return format("%d", i);
   }
 }
 

@@ -106,27 +106,49 @@ def genEnd():
 
 def stringify(s): return "\"{}\"".format(s)
 
-class Value:
-    def hasRegister(self):
-        return False
+def assert_init(f):
+    def wrapper(*args):
+        self = args[0]
+        assert(self.init)
+        return f(*args)
+    return wrapper
 
-class Literal(Value):
+
+class LValue:
+    def __init__(self):    self.instr = ''
+
+    ## defaults... in most cases
+    def hasRegister(self): return False
+    def getRegister(self): assert(False)
+
+
+class RValue:
+    def __init__(self): self.instr = ''
+
+    ## These should never be overridden for RValues
+    def hasRegister(self): return False
+    def getRegister(self): assert(False)
+    def genAssign(self, source): assert(False)
+
+
+class Literal(RValue):
     def __init__(self, val):
+        RValue.__init__(self)
         self.val = val
-        self.instr = ''
 
     def storeTo(self, dest_regnum):
         return genInstr("LITERAL", dest_regnum, self.val)
 
 
-class NewObjLiteral(Value):
+class NewObjLiteral(RValue):
+    def __init__(self): RValue.__init__(self)
     def storeTo(self, dest_regnum):
         return genInstr("NEWOBJECT", dest_regnum)
 
-
-class Local(Value):
+class Local(LValue):
 
     def __init__(self):
+        LValue.__init__(self)
         self.init = False
 
     @staticmethod
@@ -145,53 +167,49 @@ class Local(Value):
         self.init = True
         return self
 
+    @assert_init
+    def hasRegister(self): return True
+    @assert_init
+    def getRegister(self): return self.regnum
+
+    @assert_init
     def genAssign(self, source):
-        assert(self.init)
         global lastAssignedReg; lastAssignedReg = self.regnum
         return self.instr + source.storeTo(self.regnum)
 
+    @assert_init
     def storeTo(self, dest_regnum):
-        assert(self.init)
         return self.instr + genInstr("MOVE", dest_regnum, self.regnum)
 
-    def hasRegister(self):
-        assert(self.init)
-        return True
-
-    def getRegister(self):
-        assert(self.init)
-        return self.regnum
-
-
-class Global(Value):
+class Global(LValue):
     def __init__(self, name):
+        LValue.__init__(self)
         self.name = name
-        self.instr = ''
 
     def genAssign(self, source):
-        instr = ''
         if not source.hasRegister():
             regnum = getTempReg()
-            instr = source.storeTo(regnum)
+            self.instr += source.storeTo(regnum)
         else:
             regnum = source.getRegister()
+            self.instr += source.instr
 
         global lastAssignedReg; lastAssignedReg = regnum
-        return instr + genInstr("STOREGLOBAL", regnum, stringify(self.name))
+        return self.instr + genInstr("STOREGLOBAL", regnum, stringify(self.name))
 
     def storeTo(self, regnum):
-        return genInstr("LOADGLOBAL", regnum, stringify(self.name))
+        return self.instr + genInstr("LOADGLOBAL", regnum, stringify(self.name))
 
 
-class Member(Value):
+class Member(LValue):
     def __init__(self, var, name):
+        LValue.__init__(self)
         self.name = name
-        self.instr = ''
 
         # if this is a member, of a member, generate a load
         if not isinstance(var, Local):
             regnum = getTempReg()
-            self.instr = var.instr + var.storeTo(regnum)
+            self.instr += var.storeTo(regnum)
             self.var = Local.fromReg(regnum)
 
         else:

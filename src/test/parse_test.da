@@ -3,5 +3,6 @@
 mylabel   STOREGLOBAL  r3   "a"
           LOADGLOBAL   r2   "a"
           LITERAL      r4   #45
+          MOVE         r1   r4
           MOVE         r0   r1
-          RET          r0   r0
+          RET          r0

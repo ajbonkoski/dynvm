@@ -3,11 +3,9 @@ SUBDIRS = frontends
 DC = dmd
 FLAGS = -O -unittest
 
-BIN = dynvm
-BIN_TEST = dynvm-test
-
-# Source files
-SRC =                    \
+DYNVM_BIN = dynvm
+#DYNVM_BIN_TEST = dynvm-test
+DYNVM_SRC =               \
 common/common.d          \
 datastruct/stack.d       \
 main.d                   \
@@ -20,19 +18,25 @@ interpret/stack_frame.d  \
 interpret/state.d        \
 interpret/interpreter.d  \
 
-ALL = $(BIN)
+TESTER_BIN = tester
+TESTER_SRC =             \
+tester_src/main.d        \
+
+
+ALL = $(DYNVM_BIN) $(TESTER_BIN)
 all: $(ALL)
-	@for dir in $(SUBDIRS) ; do \
-	echo $$dir ; $(MAKE) $(SILENT) -C $$dir all || exit 2; done
 
-$(BIN): $(SRC)
-	$(DC) $(FLAGS) -of$(BIN) $(SRC)
+$(DYNVM_BIN): $(DYNVM_SRC)
+	$(DC) $(FLAGS) -of$@ $^
 
-test: $(SRC)
-	$(DC) $(FLAGS) -unittest -of$(BIN_TEST) $(SRC)
-	time ./$(BIN_TEST)
+$(TESTER_BIN): $(TESTER_SRC)
+	$(DC) $(FLAGS) -of$@ $^
+
+# test: $(SRC)
+# 	$(DC) $(FLAGS) -unittest -of$(BIN_TEST) $(SRC)
+# 	time ./$(BIN_TEST)
 
 clean:
-	rm -f $(BIN) $(BIN_TEST) *.o
+	rm -f $(ALL) $(BIN_TEST) *.o
 	for dir in $(SUBDIRS); do \
 	echo $$dir ; $(MAKE) -C $$dir clean || exit 2; done

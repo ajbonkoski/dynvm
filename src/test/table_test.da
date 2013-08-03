@@ -15,4 +15,4 @@
         GET          r3   "h"
 
         ;; halt
-        RET          r0   r0
+        RET          r3

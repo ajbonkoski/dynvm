@@ -10,4 +10,4 @@
 *.pegcc
 *.pyc
 dynvm
-dynvm-test
+tester

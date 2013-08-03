@@ -146,6 +146,7 @@ class Member(Value):
             self.instr += source.storeTo(regnum)
         else:
             regnum = source.getRegister()
+            self.instr += source.instr
 
         self_regnum = self.var.getRegister()
         global lastAssignedReg; lastAssignedReg = regnum

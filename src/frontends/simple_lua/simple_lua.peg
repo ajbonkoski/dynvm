@@ -49,8 +49,9 @@ LVariable   <- Name
 GVariable   <- 'global' SR [a-z]
                { [lib.Global(arg[2][0])] }
 
-MVariable   <- SVariable S '.' S Name
-               { [lib.Member(arg[0][0][0], arg[4][0])] }
+MVariable   <- SVariable ( S '.' S Name)+
+               { [lib.Member(arg[0][0][0], [a[3][0] for a in arg[1]]
+)] }
 
 Literal     <- ObjLiteral / RawLiteral
                { arg[0][0] }

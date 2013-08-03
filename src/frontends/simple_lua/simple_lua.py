@@ -240,10 +240,34 @@ class Member(LValue):
         self.instr = var.instr
 
         # if this is a member, of a member, generate a load
-        if not isinstance(var, Local):
-            regnum = allocTempReg()
-            self.instr += var.storeTo(regnum)
-            self.var = Local.fromReg(regnum)
+        if not isinstance(var, Local): self.reduceVar()
+
+        # if name is actually a list of names, we need to reduce them
+        if type(self.name) == type([]): self.reduceName()
+
+    def reduceVar(self):
+        regnum = allocTempReg()
+        self.instr += self.var.storeTo(regnum)
+        self.var = Local.fromReg(regnum)
+
+    def reduceName(self):
+        assert(len(self.name) > 0)
+        last_name = self.name[-1]
+        assert(type(last_name) == type(''))
+        name_list = self.name[:-1]
+
+        ## reduce each name
+        new_reg = allocTempReg()
+        new_var = Local.fromReg(new_reg)
+        for n in name_list:
+            assert(type(n) == type(''))
+            self.name = n
+            self.instr = self.storeTo(new_reg)
+            self.var = new_var
+
+        ## set the final self.name
+        self.name = last_name
+
 
     def storeTo(self, dest_regnum):
         self_regnum = self.var.getRegister()

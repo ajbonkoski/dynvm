@@ -29,6 +29,13 @@ def allocTempReg():
 def freeTempReg(reg):
     tempRegPool.append(reg)
 
+nextLabel = 0
+def allocLabel(prefix):
+    global nextLabel
+    id = nextLabel
+    nextLabel += 1
+    return "{}_{}".format(prefix, id)
+
 binOpNameMap = {
     '+': '__op_add',
     '-': '__op_sub',
@@ -37,12 +44,13 @@ binOpNameMap = {
 }
 
 ######################### INSTRUCTIONS ##############################
-C1_SP  = ' '*4
+C1_SP  = ' '*15
 C2_OP  = '{:15}'
-C3_REG = ' r{:5}'
+C3_REG = ' r{:15}'
+C3_SBX = ' {}'
 C4_BX  = ' {}'
-C4_REG = ' r{:5}'
-C5_REG = ' r{:5}'
+C4_REG = ' r{:15}'
+C5_REG = ' r{:15}'
 END    = '\n'
 
 def genInstr_iABx(opcode, reg, literal):
@@ -61,9 +69,17 @@ def genInstr_iABC(opcode, rega, regb, regc):
     return (C1_SP + C2_OP + C3_REG + C4_REG + C5_REG + END).format(
                     opcode,   rega,    regb,    regc)
 
+def genInstr_isBx(opcode, sBx):
+    return (C1_SP + C2_OP + C3_SBX + END).format(
+                   opcode,   sBx)
+
 def genInstr_iMb(opcode, self_reg, dest_reg, literal):
     return genInstr("SETSELF",  self_reg) + \
            genInstr(opcode[:3], dest_reg, literal)
+
+def genInstr_iJc(opcode, rega, tf, label):
+    return genInstr("TEST", rega, '#{}'.format(1 if tf else 0)) + \
+           genInstr("JMP",  label)
 
 LOAD_YES = 1
 LOAD_NO = 2
@@ -78,9 +94,12 @@ instructions = {
     'SETSELF':      (genInstr_iA,   LOAD_NO),
     'GET':          (genInstr_iABx, LOAD_YES),
     'SET':          (genInstr_iABx, LOAD_NO),
-    'GETMEMBER':    (genInstr_iMb,  LOAD_NO),  ## aggregate type (ignore the LOAD settings)
-    'SETMEMBER':    (genInstr_iMb,  LOAD_NO),
+    'GETMEMBER':    (genInstr_iMb,  LOAD_NO),  ## aggregate type
+    'SETMEMBER':    (genInstr_iMb,  LOAD_NO),  ## aggregate type
     'CALL':         (genInstr_iABC, LOAD_YES),
+    'TEST':         (genInstr_iABx, LOAD_NO),
+    'JMP':          (genInstr_isBx, LOAD_NO),
+    'JMPCOND':      (genInstr_iJc,  LOAD_NO),  ## aggregate type
 }
 
 class UnknownInstruction(Exception): pass
@@ -97,6 +116,9 @@ def genInstr(*args):
     if ld == LOAD_YES:
         global lastAssignedReg; lastAssignedReg = rega
     return instr
+
+def genLabel(label):
+    return "{}:\n".format(label)
 
 #####################################################################
 
@@ -119,6 +141,15 @@ def genBinCall(val_a, ops_list):
 
     return [val_a]
 
+
+def genIfStmt(cond_expr, body_stmt):
+
+    instr = cond_expr.instr
+    label = allocLabel("IF")
+    instr += genInstr("JMPCOND", cond_expr.outreg, False, label);
+    instr += body_stmt.instr
+    instr += genLabel(label)
+    return instr
 
 def genEnd():
     return genInstr("RET", lastAssignedReg);
@@ -154,9 +185,11 @@ class Value:
 
     def ensureGen(self):
         if self.hasRegister():
-            return self.instr
+            return [Expr(self.instr, self.getRegister())]
         else:
-            return self.storeTo(allocTempReg())
+            regnum = allocTempReg()
+            instr = self.storeTo(regnum)
+            return [Expr(instr, regnum)]
 
 class LValue(Value):
     def __init__(self): Value.__init__(self)
@@ -218,7 +251,8 @@ class Local(LValue):
 
     @assert_init
     def genAssign(self, source):
-        return self.instr + source.storeTo(self.regnum)
+        instr = self.instr + source.storeTo(self.regnum)
+        return [Expr(instr, self.regnum)]
 
     @assert_init
     def storeTo(self, dest_regnum):
@@ -231,7 +265,8 @@ class Global(LValue):
 
     def genAssign(self, source):
         regnum = self.resolveSrcReg(source);
-        return self.instr + genInstr("STOREGLOBAL", regnum, stringify(self.name))
+        instr = self.instr + genInstr("STOREGLOBAL", regnum, stringify(self.name))
+        return [Expr(instr, regnum)]
 
     def storeTo(self, regnum):
         return self.instr + genInstr("LOADGLOBAL", regnum, stringify(self.name))
@@ -282,4 +317,17 @@ class Member(LValue):
     def genAssign(self, source):
         regnum = self.resolveSrcReg(source);
         self_regnum = self.var.getRegister()
-        return self.instr + genInstr("SETMEMBER", self_regnum, regnum, stringify(self.name))
+        instr = self.instr + genInstr("SETMEMBER", self_regnum, regnum, stringify(self.name))
+        return [Expr(instr, regnum)]
+
+
+class Expr:
+    def __init__(self, instr, outreg):
+        self.instr = instr
+        self.outreg = outreg
+
+    def toString(self, name):
+        s = "{} .text (outreg={})\n".format(name, self.outreg)
+        return s + self.instr + "\n"
+
+

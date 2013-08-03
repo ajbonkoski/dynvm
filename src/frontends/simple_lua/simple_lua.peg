@@ -2,8 +2,11 @@ lib { simple_lua }
 
 Grammar     <- S (Statement S)+ EOI               { merge_array(1, 0) + lib.genEnd()  }
 
-Statement    <- EStatment                          {..0}
-EStatment    <- Expression S (';' S)*              {..0}
+Statement    <- EStatment / IfStatement            {..0}
+EStatment    <- Expression S (';' S)*              {...0.instr}
+IfStatement  <- 'if' SR Expression SR 'then'
+                     SR Expression SR
+                'end'                              { lib.genIfStmt(...2, ...6) }
 
 Expression   <- AssignExpr / BinOpExprGen          {..0}
 AssignExpr   <- LValue S '=' S BinOpExprP1         { ...0.genAssign(...4) }
@@ -16,9 +19,6 @@ BinOpExprP1 <- BinOpExprP2 (S BinOpP1 S BinOpExprP2)*
 BinOpExprP2 <- RValue (S BinOpP2 S RValue)*
                { lib.genBinCall(...0, zip(arg_array2(1, 1, require=2),
                                           arg_array3(1, 3, require=2))) }
-
-BinOpP1     <- '+' / '-'                           {..0}
-BinOpP2     <- '*' / '/'                           {..0}
 
 LValue      <- Variable                            {..0}
 RValue      <- Variable / Literal                  {..0}
@@ -36,8 +36,15 @@ RawLiteral  <- IntLiteral / StrLiteral             { [lib.Literal(..0)] }
 
 IntLiteral  <- [0-9]+                              { '#'+merge(0) }
 StrLiteral  <- '"' (!'"' .)* '"'                   { stringify(merge(1, 3)) }
-Name        <- [a-z]+                              { merge(0) }
+Name        <- !Reserved [a-z]+                    { merge(1) }
 
+
+Reserved    <- 'if' / 'then' / 'end' /
+               'global' /
+               BinOpP1 / BinOpP2
+
+BinOpP1     <- '+' / '-'                           {..0}
+BinOpP2     <- '*' / '/'                           {..0}
 
 EOL         <- '\r\n' / '\n' / '\r'
 SR          <- (' ' / '\t' / EOL)+

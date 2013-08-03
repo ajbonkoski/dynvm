@@ -3,6 +3,8 @@ import std.path;
 import std.file;
 import std.regex;
 import std.string;
+import std.process;
+import std.conv;
 
 string TEST_DIR = "test";
 auto BLACKLIST = [regex("#.*#"), regex(".*~")];
@@ -40,7 +42,13 @@ class DynasmTest : Test
   immutable static string ext = ".da";
   this(string tf){ super(tf); }
   override string getRequiredTestfileExt(){ return ext; }
-  override bool run() { assert(0, "unimplemented"); }
+
+  override bool run()
+  {
+    string cmd = format("./dynvm -s %s/%s | diff %s/%s -",
+                        TEST_DIR, testfile, TEST_DIR, ansfile);
+    return executeShell(cmd).status == 0;
+  }
 }
 
 class SluaTest : Test
@@ -117,16 +125,34 @@ void build_test_map()
 
 }
 
-void run()
+int run()
 {
   build_test_map();
 
-  foreach(testname, test; test_map)
-    writeln(testname, ": ", test.testfile, ", ", test.ansfile);
+  writef("--------------------------------\n");
+  writef("Running Tester with %d tests:\n", test_map.length);
+  writef("--------------------------------\n");
+
+  uint pass_count = 0;
+  foreach(testname, test; test_map) {
+    writef("Running '%s': ", testname, test.testfile, test.ansfile);
+    bool passed = test.run();
+    writef("%s\n", passed ? "PASSED" : "FAILED");
+    if(passed) pass_count++;
+  }
+
+  double perc = 100.0*(to!double(pass_count) / to!double(test_map.length));
+  writef("--------------------------------\n");
+  writef("Pass Rate (%d/%d): %.2f\n", pass_count, test_map.length, perc);
+
+  return pass_count == test_map.length ? 0 : 1;
 }
 
-void main()
+
+int main()
 {
-  try { run(); }
+  try { return run(); }
   catch(TesterError ex) { stderr.writeln("ERROR: ", ex.msg); }
+
+  return 1;
 }

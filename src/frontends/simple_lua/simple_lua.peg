@@ -5,43 +5,34 @@ Grammar     <- S (Expression S (';' S)* )+ EOI
                  lib.genEnd()  }
 
 Expression  <- AssignExpr /
-               BinOpExprEx
+               BinOpExprGen
                { arg[0][0] }
 
 AssignExpr  <- LValue S '=' S BinOpExprP1
                { arg[0][0][0].genAssign(arg[4][0][0]) }
 
-BinOpExprEx <- BinOpExprP1
+BinOpExprGen <- BinOpExprP1
                { arg[0][0][0].ensureGen() }
 
 BinOpExprP1 <- BinOpExprP2 (S BinOpP1 S BinOpExprP2)*
                { lib.genBinCall(arg[0][0][0],
                   [(a[1][0], a[3][0][0]) for a in (arg[1] if len(arg) > 1 else [])]) }
 
-BinOpP1     <- '+' / '-'
-               { arg[0][0] }
-
-BinOpExprP2 <- BinOpExprP3 (S BinOpP2 S BinOpExprP3)*
+BinOpExprP2 <- RValue (S BinOpP2 S RValue)*
                { lib.genBinCall(arg[0][0][0],
                   [(a[1][0], a[3][0][0]) for a in (arg[1] if len(arg) > 1 else [])]) }
 
-BinOpP2     <- '*' / '/'
-               { arg[0][0] }
+BinOpP1     <- '+' / '-'                           { arg[0][0] }
+BinOpP2     <- '*' / '/'                           { arg[0][0] }
 
-BinOpExprP3 <- RValue
-               { arg[0][0] }
+LValue      <- Variable                            { arg[0][0] }
+RValue      <- Variable / Literal                  { arg[0][0] }
+Variable    <- MVariable / GVariable / LVariable   { arg[0][0] }
 
-LValue      <- Variable
-               { arg[0][0] }
-
-RValue      <- Variable / Literal
-               { arg[0][0] }
-
-Variable    <- MVariable / SVariable
-               { arg[0][0] }
-
-SVariable   <- GVariable / LVariable
-               { arg[0][0] }
+SVariable   <- GVariable / LVariable               { arg[0][0] }
+MVariable   <- SVariable ( S '.' S Name)+
+               { [lib.Member(arg[0][0][0], [a[3][0] for a in arg[1]]
+)] }
 
 LVariable   <- Name
                { [lib.Local.fromVar(arg[0][0])] }
@@ -49,21 +40,10 @@ LVariable   <- Name
 GVariable   <- 'global' '.' Name
                { [lib.Global(arg[2][0])] }
 
-MVariable   <- SVariable ( S '.' S Name)+
-               { [lib.Member(arg[0][0][0], [a[3][0] for a in arg[1]]
-)] }
 
-Literal     <- ObjLiteral / RawLiteral
-               { arg[0][0] }
-
-InstLiteral <- ObjLiteral
-               { arg[0][0] }
-
-ObjLiteral  <- '{' S '}'
-               { [lib.NewObjLiteral()] }
-
-RawLiteral  <- IntLiteral / StrLiteral
-               { [lib.Literal(arg[0][0])] }
+Literal     <- ObjLiteral / RawLiteral             { arg[0][0] }
+ObjLiteral  <- '{' S '}'                           { [lib.NewObjLiteral()] }
+RawLiteral  <- IntLiteral / StrLiteral             { [lib.Literal(arg[0][0])] }
 
 IntLiteral  <- [0-9]+
                { '#' + ''.join([a[0] for a in arg[0]]) }
@@ -73,7 +53,6 @@ StrLiteral  <- '"' (!'"' .)* '"'
 
 Name        <- [a-z]+
                { ''.join([a[0] for a in arg[0]]) }
-
 
 
 EOL         <- '\r\n' / '\n' / '\r'

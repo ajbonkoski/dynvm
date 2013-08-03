@@ -51,7 +51,7 @@ class DynString : DynObject
 
   override string pretty()
   {
-    return format("%s", s);
+    return format("\"%s\"", s);
   }
 }
 

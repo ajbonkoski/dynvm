@@ -29,7 +29,7 @@ IFormat[IOpcode.max+1] instrTable =
     IOpcode.LOADGLOBAL:  IFormat.iABx,
     IOpcode.STOREGLOBAL: IFormat.iABx,
     IOpcode.MOVE:        IFormat.iAB,
-    IOpcode.RET:         IFormat.iAB,
+    IOpcode.RET:         IFormat.iA,
     IOpcode.NEWOBJECT:   IFormat.iA,
     IOpcode.SETSELF:     IFormat.iA,
     IOpcode.GET:         IFormat.iABx,

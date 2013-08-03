@@ -1,6 +1,7 @@
 
 varMap = {}
 nextReg = 2
+lastAssignedReg = -1
 
 def variableToRegister(variable):
     global varMap, nextReg
@@ -54,7 +55,7 @@ def genBinCall(val_a, op_name, val_b):
     return [Local(int(dest_reg), instr)]
 
 def genEnd():
-    return "    RET            r0  r0\n"
+    return "    RET            r"+lastAssignedReg+"\n"
 
 
 class Value:
@@ -87,6 +88,7 @@ class Local(Value):
             raise Exception("Local() constructor received invalid type")
 
     def genAssign(self, source):
+        global lastAssignedReg; lastAssignedReg = self.regnum
         return self.instr + source.storeTo(self.regnum)
 
     def storeTo(self, dest_regnum):
@@ -112,6 +114,7 @@ class Global(Value):
         else:
             regnum = source.getRegister()
 
+        global lastAssignedReg; lastAssignedReg = regnum
         return instr + genStoreGlobal(regnum, self.name)
 
     def storeTo(self, regnum):
@@ -144,4 +147,5 @@ class Member(Value):
             regnum = source.getRegister()
 
         self_regnum = self.var.getRegister()
+        global lastAssignedReg; lastAssignedReg = regnum
         return self.instr + genSetMember(self_regnum, regnum, self.name)

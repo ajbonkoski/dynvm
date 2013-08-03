@@ -21,6 +21,10 @@ class State
   @property auto self() { return _self; }
   @property void self(DynObject s) { _self = s; }
 
+  DynObject _ret;
+  @property auto ret() { return _ret; }
+  @property void ret(DynObject r) { _ret = r; }
+
   this(CodeObject co)
   {
     this(new StackFrame(co));
@@ -75,6 +79,7 @@ class State
   auto stringify(IndentedWriter iw)
   {
     iw.formattedWrite("self: %s\n", self);
+    iw.formattedWrite("ret:  %s\n", ret);
     iw.formattedWrite("Num Globals: %d\n", globals.length);
     iw.indent();
     foreach(s; globals.keys.sort){

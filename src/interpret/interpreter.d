@@ -38,6 +38,7 @@ private void runLoop(State state, CodeObject co)
         break;
 
       case IOpcode.RET:
+        state.ret = state.getRegister(inst.iA.a);
         break EXECLOOP;  // for now RET just exits
 
       case IOpcode.NEWOBJECT:

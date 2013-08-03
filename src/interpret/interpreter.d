@@ -86,10 +86,11 @@ void interpretCode(CodeObject co, bool silent)
     writeln(t.info);
   }
 
-  writeln("Result: ", state.ret.pretty());
-
   if(!silent) {
     writeln("==== Final State: ====");
     writeln(state.stringify(new IndentedWriter(4)).data);
+  } else {
+    writeln(state.ret.pretty());
   }
+
 }

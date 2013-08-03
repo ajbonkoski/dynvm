@@ -51,6 +51,7 @@ def genBinCall(val_a, op_name, val_b):
     arg_reg = getTempReg(1)
     instr += val_b.storeTo(arg_reg);
     dest_reg = call_reg  # replace the function ptr with the ret val
+    global lastAssignedReg; lastAssignedReg = dest_reg
     instr += "    CALL           r"+dest_reg+"  r"+call_reg+"  r"+arg_reg+"\n"
     return [Local(int(dest_reg), instr)]
 

@@ -21,7 +21,6 @@ binOpNameMap = {
     '/': '__op_div',
 }
 
-
 ######################### INSTRUCTIONS ##############################
 C1_SP  = ' '*4
 C2_OP  = '{:15}'
@@ -114,16 +113,31 @@ def assert_init(f):
     return wrapper
 
 
-class LValue:
-    def __init__(self):    self.instr = ''
+class Value:
+    def __init__(self):  self.instr = ''
+
+    def resolveSrcReg(self, src):
+        """This method returns a regnum of where the source
+           can be found. It attempts to avoid allocating excess
+           temporary registers."""
+        if not src.hasRegister():
+            regnum = getTempReg()
+            self.instr += src.storeTo(regnum)
+        else:
+            regnum = src.getRegister()
+            self.instr += src.instr
+        return regnum
+
+class LValue(Value):
+    def __init__(self): Value.__init__(self)
 
     ## defaults... in most cases
     def hasRegister(self): return False
     def getRegister(self): assert(False)
 
 
-class RValue:
-    def __init__(self): self.instr = ''
+class RValue(Value):
+    def __init__(self): Value.__init__(self)
 
     ## These should never be overridden for RValues
     def hasRegister(self): return False
@@ -187,13 +201,7 @@ class Global(LValue):
         self.name = name
 
     def genAssign(self, source):
-        if not source.hasRegister():
-            regnum = getTempReg()
-            self.instr += source.storeTo(regnum)
-        else:
-            regnum = source.getRegister()
-            self.instr += source.instr
-
+        regnum = self.resolveSrcReg(source);
         global lastAssignedReg; lastAssignedReg = regnum
         return self.instr + genInstr("STOREGLOBAL", regnum, stringify(self.name))
 
@@ -220,13 +228,7 @@ class Member(LValue):
         return self.instr + genInstr("GETMEMBER", self_regnum, dest_regnum, stringify(self.name))
 
     def genAssign(self, source):
-        if not source.hasRegister():
-            regnum = getTempReg()
-            self.instr += source.storeTo(regnum)
-        else:
-            regnum = source.getRegister()
-            self.instr += source.instr
-
+        regnum = self.resolveSrcReg(source);
         self_regnum = self.var.getRegister()
         global lastAssignedReg; lastAssignedReg = regnum
         return self.instr + genInstr("SETMEMBER", self_regnum, regnum, stringify(self.name))

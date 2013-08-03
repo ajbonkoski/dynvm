@@ -1,0 +1,4 @@
+#!/bin/bash
+
+MYDIR=$(dirname $(readlink -f $0))
+rlwrap $MYDIR/slua-repl-raw

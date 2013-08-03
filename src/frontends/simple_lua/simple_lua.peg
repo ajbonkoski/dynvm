@@ -64,16 +64,14 @@ ObjLiteral  <- '{' S '}'
 RawLiteral  <- IntLiteral / StrLiteral
                { [lib.Literal(arg[0][0])] }
 
-IntLiteral  <- [0-9][0-9]*
-               { '#' + arg[0][0] + \
-                 (''.join([a[0] for a in arg[1]]) if len(arg) > 1
-                 else '') }
+IntLiteral  <- [0-9]+
+               { '#' + ''.join([a[0] for a in arg[0]]) }
 
 StrLiteral  <- '"' (!'"' .)* '"'
                { '"'+''.join([a[1][0] for a in arg[1]])+'"' }
 
-Name        <- [a-z]
-               { arg[0][0] }
+Name        <- [a-z]+
+               { ''.join([a[0] for a in arg[0]]) }
 
 
 

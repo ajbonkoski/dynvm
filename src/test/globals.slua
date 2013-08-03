@@ -1,0 +1,1 @@
+global.a = 5; global.b = {} global.b.c = {} global.a

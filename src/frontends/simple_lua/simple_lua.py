@@ -79,7 +79,7 @@ def genInstr(*args):
 
 
 
-def genBinCall(val_a, ops_list): #op_name, val_b):
+def genBinCall(val_a, ops_list):
 
     call_reg = getTempReg(0)
     dest_reg = call_reg  # replace the function ptr with the ret val
@@ -92,13 +92,14 @@ def genBinCall(val_a, ops_list): #op_name, val_b):
         instr += val_b.storeTo(arg_reg);
         global lastAssignedReg; lastAssignedReg = dest_reg
         instr += genInstr("CALL", dest_reg, call_reg, arg_reg)
-        val_a = Local(int(dest_reg), instr)
+        val_a = Local.fromReg(dest_reg, instr)
 
     return [val_a]
 
 
 def genEnd():
     return genInstr("RET", lastAssignedReg);
+
 
 
 
@@ -124,27 +125,41 @@ class NewObjLiteral(Value):
 
 
 class Local(Value):
-    def __init__(self, val, instr=''):
-        self.instr = instr
 
-        if type(val) == type(''):
-            self.regnum = variableToRegister(val)
-        elif type(val) == type(0):
-            self.regnum = str(val)
-        else:
-            raise Exception("Local() constructor received invalid type")
+    def __init__(self):
+        self.init = False
+
+    @staticmethod
+    def fromVar(var, instr=''):
+        self = Local()
+        self.regnum = variableToRegister(str(var))
+        self.instr = instr
+        self.init = True
+        return self
+
+    @staticmethod
+    def fromReg(reg, instr=''):
+        self = Local()
+        self.regnum = str(reg)
+        self.instr = instr
+        self.init = True
+        return self
 
     def genAssign(self, source):
+        assert(self.init)
         global lastAssignedReg; lastAssignedReg = self.regnum
         return self.instr + source.storeTo(self.regnum)
 
     def storeTo(self, dest_regnum):
+        assert(self.init)
         return self.instr + genInstr("MOVE", dest_regnum, self.regnum)
 
     def hasRegister(self):
+        assert(self.init)
         return True
 
     def getRegister(self):
+        assert(self.init)
         return self.regnum
 
 
@@ -177,7 +192,7 @@ class Member(Value):
         if not isinstance(var, Local):
             regnum = getTempReg()
             self.instr = var.instr + var.storeTo(regnum)
-            self.var = Local(int(regnum))
+            self.var = Local.fromReg(regnum)
 
         else:
             self.var = var

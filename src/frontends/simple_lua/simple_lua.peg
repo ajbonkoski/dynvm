@@ -44,7 +44,7 @@ SVariable   <- GVariable / LVariable
                { arg[0][0] }
 
 LVariable   <- Name
-               { [lib.Local(arg[0][0])] }
+               { [lib.Local.fromVar(arg[0][0])] }
 
 GVariable   <- 'global' SR [a-z]
                { [lib.Global(arg[2][0])] }

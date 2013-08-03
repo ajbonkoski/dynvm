@@ -1,4 +1,5 @@
 module dasm.literal;
+import std.conv;
 
 enum LType { String, Int }
 union LData
@@ -38,15 +39,24 @@ struct Literal
     }
   }
 
-  bool opEquals(Literal other) const
+  string toString() const
+  {
+    final switch(type)
+    {
+      case LType.String: return s;
+      case LType.Int:    return to!string(i);
+    }
+  }
+
+  int opCmp(const ref Literal other) const
   {
     if(this.type != other.type)
-      return false;
+      return 1;
 
     final switch(type)
     {
-      case LType.String: return s == other.s;
-      case LType.Int:    return i == other.i;
+      case LType.String: return s != other.s;
+      case LType.Int:    return i != other.i;
     }
   }
 

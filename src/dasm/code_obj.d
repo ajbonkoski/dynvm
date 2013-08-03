@@ -30,8 +30,7 @@ class CodeObject
   uint addLiteral(Literal l)
   {
     uint *id = (l in literal_to_uint);
-    if(id != null)
-      return *id;
+    if(id) return *id;
 
     literal_to_uint[l] = next_literal_id;
     if(uint_to_literal.length == next_literal_id)

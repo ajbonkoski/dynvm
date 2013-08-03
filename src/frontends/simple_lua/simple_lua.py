@@ -143,6 +143,12 @@ class Value:
             self.instr += src.instr
         return regnum
 
+    def ensureGen(self):
+        if self.hasRegister():
+            return self.instr
+        else:
+            return self.storeTo(allocTempReg())
+
 class LValue(Value):
     def __init__(self): Value.__init__(self)
 
@@ -166,6 +172,7 @@ class Literal(RValue):
         self.val = val
 
     def storeTo(self, dest_regnum):
+        global lastAssignedReg; lastAssignedReg = dest_regnum
         return genInstr("LITERAL", dest_regnum, self.val)
 
 

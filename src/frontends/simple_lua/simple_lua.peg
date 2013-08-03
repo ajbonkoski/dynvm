@@ -12,7 +12,7 @@ AssignExpr  <- LValue S '=' S BinOpExprP1
                { arg[0][0][0].genAssign(arg[4][0][0]) }
 
 BinOpExprEx <- BinOpExprP1
-               { arg[0][0][0].instr }
+               { arg[0][0][0].ensureGen() }
 
 BinOpExprP1 <- BinOpExprP2 (S BinOpP1 S BinOpExprP2)*
                { lib.genBinCall(arg[0][0][0],

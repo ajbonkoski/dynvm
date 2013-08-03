@@ -1,0 +1,8 @@
+
+        LITERAL   r0  #1
+
+        LITERAL   r1  #5
+        TEST      r0  #1
+        JMP       #1
+        LITERAL   r1  #42
+        RET       r1

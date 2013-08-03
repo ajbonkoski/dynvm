@@ -69,6 +69,18 @@ private void runLoop(State state, CodeObject co, bool silent)
         auto obj = state.getRegister(inst.iABC.b).call(args);
         state.setRegister(inst.iABC.a, obj);
         break;
+
+      case IOpcode.TEST:
+        bool t  = state.getRegister(inst.iABx.a).truthiness;
+        bool tl = state.getLiteralObj(inst.iABx.bx).truthiness;
+        if(t != tl) state.pc += 1;
+        break;
+
+      case IOpcode.JMP:
+        int offset = inst.isBx.sbx.sBx2int;
+        state.pc += offset;
+        break;
+
     }
   }
 }

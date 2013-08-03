@@ -8,7 +8,9 @@ FIELD TYPES: specified with regex
 register:  r[0-9]+
 string:    "[^ "]*"
 integer:   #[0-9]+
+sign-int:  #-?[0-9]+
 literal:   string | integer
+boolean:   true | false
 
 PSEUDOCODE CONVETIONS
 ----------------------------------------------------------------------
@@ -27,4 +29,6 @@ NEWOBJECT(iA)       register                        |  R[A] = new object()
 SETSELF(iA)         register                        |  self = R[A] (required before a MEMBER ACCESS OPCODE)
 GET(iABx)           register   string               |  R[A] = self.LOOKUP[B]
 SET(iABx)           register   string               |  self.LOOKUP[B] = R[A]
-CALL(iABC)          reguster   register   register  |  R[A] = CALL(R[B], R[B+1]..R[C]), C <= B means no args
+CALL(iABC)          register   register   register  |  R[A] = CALL(R[B], R[B+1]..R[C]), C <= B means no args
+TEST(iABx)          register   boolean              |  if(bool(R[A]) != Bx) PC++, skip next instruction
+JMP(isBx)                     signed-int            |  PC += sBx

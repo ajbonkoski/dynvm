@@ -153,6 +153,17 @@ uint parseLiteral(CodeObject co, const char[] s)
   }
 }
 
+uint requireSBX(const char[] s)
+{
+  try {
+    enforce(s.length >= 2 && s[0] == '#');
+    return int2sBx(to!int(s[1..$]));
+  } catch(Exception ex) {
+    string msg = format("Failed to parse signed from %s on line %d", s, lineno);
+    throw new DynAssemblerException(msg);
+  }
+}
+
 CodeObject assembleFile(File f, bool silent)
 {
     CodeObject co = new CodeObject();
@@ -194,9 +205,10 @@ CodeObject assembleFile(File f, bool silent)
           co.addInstr(Instruction.create(op, a, bx));
           break;
         }
-        case IFormat.iAsBx:
-          string msg = format("IFormat.iAsBx is unimplemented at line %d", lineno);
-          throw new DynAssemblerException(msg);
+        case IFormat.isBx:
+          uint sbx = requireSBX(line.fieldA);
+          co.addInstr(Instruction.create(op, sbx));
+          break;
       }
 
     }

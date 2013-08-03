@@ -1,10 +1,13 @@
 module dasm.instructions;
 
+import std.exception;
 import std.bitmanip;
 import std.conv;
 import std.string;
 import std.stdio;
 
+// TEST(iABx)          register   boolean              |  if(bool(R[A]) != Bx) PC++, skip next instruction
+// JMP(isBx)                     signed-int            |  PC += sBx
 
 enum IOpcode
 {
@@ -18,10 +21,25 @@ enum IOpcode
     GET,
     SET,
     CALL,
+    TEST,
+    JMP,
 }
 
 private struct IStruct(Fields...) { mixin(bitfields!(Fields)); }
-enum IFormat { iABC, iAB, iA, iABx, iAsBx };
+enum IFormat { iABC, iAB, iA, iABx, isBx };
+
+// convert functions between int and sbx
+// this is needed because sbx is a odd size (26-bit)
+uint int2sBx(int i ){
+  int v = i>>25;
+  enforce(v == 0xffffffff || v == 0x00000000);
+  return cast(uint) (i&((1<<26)-1));
+}
+
+int sBx2int(uint i){
+  return ((cast(int)i)<<6)>>6;
+}
+
 
 IFormat[IOpcode.max+1] instrTable =
 [
@@ -35,6 +53,8 @@ IFormat[IOpcode.max+1] instrTable =
     IOpcode.GET:         IFormat.iABx,
     IOpcode.SET:         IFormat.iABx,
     IOpcode.CALL:        IFormat.iABC,
+    IOpcode.TEST:        IFormat.iABx,
+    IOpcode.JMP:         IFormat.isBx,
 ];
 
 union IData
@@ -61,9 +81,8 @@ union IData
 
     IStruct!(
         IOpcode, "opcode",  6,
-        uint,    "a",       8,
-        uint,    "sbx",    18
-    ) iAsBx;
+        uint,    "sbx",    26
+    ) isBx;
 }
 
 // this builds an opcode lookup table at compile-time
@@ -110,11 +129,11 @@ struct Instruction
             opcode = op;
             a = a_; bx = b_;
           }
-        } else static if(T == "iAsBx") {
-          i.fmt = IFormat.iAsBx;
-          with(i.iAsBx) {
+        } else static if(T == "isBx") {
+          i.fmt = IFormat.isBx;
+          with(i.isBx) {
             opcode = op;
-            a = a_; sbx = b_;
+            sbx = a_;
           }
         } else {
           static assert(false, "Unrecognized instruction type in Instruction.create");
@@ -133,7 +152,7 @@ struct Instruction
         case IFormat.iAB:   return create!("iAB")(op, a_, b_, c_);
         case IFormat.iA:   return create!("iA")(op, a_, b_, c_);
         case IFormat.iABx:  return create!("iABx")(op, a_, b_, c_);
-        case IFormat.iAsBx: return create!("iAsBx")(op, a_, b_, c_);
+        case IFormat.isBx: return create!("isBx")(op, a_, b_, c_);
       }
     }
 
@@ -156,8 +175,8 @@ struct Instruction
             return format("%s %d %d", opcode, a, bx);
           }
           break;
-          case IFormat.iAsBx: with(iAsBx) {
-            return format("%s %d %d", opcode, a, sbx);
+          case IFormat.isBx: with(isBx) {
+            return format("%s %d", opcode, sbx.sBx2int);
           }
           break;
         }
@@ -182,9 +201,6 @@ unittest
     assert(i.iABx.opcode    == 0x3f);
     assert(i.iABx.a         == 0xff);
     assert(i.iABx.bx        == 0x3ffff);
-    assert(i.iAsBx.opcode   == 0x3f);
-    assert(i.iAsBx.a        == 0xff);
-    assert(i.iAsBx.sbx      == 0x3ffff);
 
     i = Instruction.create!("iABx")(IOpcode.LOADGLOBAL, 5, 10);
     assert(i.opcode         == 0x1);
@@ -193,5 +209,29 @@ unittest
     assert(i.iABx.opcode    == 1);
     assert(i.iABx.a         == 5);
     assert(i.iABx.bx        == 10);
+
+
+    /** int <-> sBx conversion unittests **/
+
+    assert(int2sBx(33554431)   ==  0x01ffffff);
+    assert(int2sBx(1)          ==  0x00000001);
+    assert(int2sBx(0)          ==  0x00000000);
+    assert(int2sBx(-1)         ==  0x03ffffff);
+    assert(int2sBx(-33554432)  ==  0x02000000);
+
+    assert(sBx2int(0x01ffffff) ==  33554431);
+    assert(sBx2int(0x00000001) ==  1);
+    assert(sBx2int(0x00000000) ==  0);
+    assert(sBx2int(0x03ffffff) == -1);
+    assert(sBx2int(0x02000000) == -33554432);
+
+    auto fail_throw(A,B)(A function(B) f, B i) {
+      try { f(i); return false; } catch(Throwable t) { return true; }}
+
+    assert(fail_throw(&int2sBx,   33554432));
+    assert(fail_throw(&int2sBx,  123456789));
+    assert(fail_throw(&int2sBx,  -33554433));
+    assert(fail_throw(&int2sBx, -123456789));
+
 }
 

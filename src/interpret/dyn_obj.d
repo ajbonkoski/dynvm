@@ -38,6 +38,8 @@ class DynObject
     return s;
   }
 
+  // generic objects are always true!
+  bool truthiness(){ return true; }
 }
 
 class DynString : DynObject
@@ -60,6 +62,9 @@ class DynString : DynObject
   {
     return format("\"%s\"", s);
   }
+
+  // string truthiness is its length
+  override bool truthiness(){ return s.length != 0; }
 }
 
 class DynInt : DynObject
@@ -85,6 +90,9 @@ class DynInt : DynObject
   {
     return format("%d", i);
   }
+
+  // int truthiness is C-style
+  override bool truthiness(){ return i != 0; }
 }
 
 abstract class DynFunc : DynObject {}

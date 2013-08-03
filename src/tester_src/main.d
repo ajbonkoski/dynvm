@@ -10,6 +10,7 @@ import std.getopt;
 string TEST_DIR = "test";
 auto BLACKLIST = [regex("#.*#"), regex(".*~")];
 string ANS_EXT = ".ans";
+uint SEPARATOR_SIZE = 45;
 
 class TesterError : Error { this(string s){ super(s); } }
 
@@ -64,7 +65,17 @@ class SluaTest : Test
   immutable static string ext = ".slua";
   this(string tf){ super(tf); }
   override string getRequiredTestfileExt(){ return ext; }
-  override bool run() { assert(0, "unimplemented"); }
+
+  override bool run()
+  {
+    string cmd = format("cat %s/%s | ./slua - | ./dynvm -s - | diff %s/%s -",
+                        TEST_DIR, testfile, TEST_DIR, ansfile);
+    auto res = executeShell(cmd);
+    success = (res.status == 0);
+    output = res.output;
+
+    return success;
+  }
 }
 
 Test createTest(string name)
@@ -137,28 +148,32 @@ int run()
 {
   build_test_map();
 
-  writef("================================\n");
+  // a nice python-style 'c'*5 string utility
+  auto s(char c, uint times) { char[] s; s.length = times; foreach(i; 0..times) s[i] = c; return s;}
+  void write_separator(char c) { writeln(s(c, SEPARATOR_SIZE)); }
+
+  write_separator('=');
   writef("Running Tester with %d tests:\n", test_map.length);
-  writef("================================\n");
+  write_separator('=');
   writef("\n");
 
   uint pass_count = 0;
   foreach(testname, test; test_map) {
-    writef("Running '%s': ", testname, test.testfile, test.ansfile);
+    writef("Running %-30s ", format("'%s':", testname));
     bool passed = test.run();
     writef("%s\n", passed ? "PASSED" : "FAILED");
 
     if(passed) {
       pass_count++;
     } else if(SHOW_OUTPUT_ON_FAILURE){
-      writef("--------------------------------\n");
+      write_separator('-');
       writef("%s\n", test.output);
     }
   }
 
   double perc = 100.0*(to!double(pass_count) / to!double(test_map.length));
   writef("\n");
-  writef("================================\n");
+  write_separator('=');
   writef("Pass Rate (%d/%d): %.2f\n", pass_count, test_map.length, perc);
 
   return pass_count == test_map.length ? 0 : 1;

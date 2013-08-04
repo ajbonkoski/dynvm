@@ -172,8 +172,9 @@ def genWhileStmt(cond, body):
 
     label_start = allocLabel("WHILE_START")
     label_end = allocLabel("WHILE_END")
+    instr = ''
 
-    instr = genLabel(label_start)
+    instr += genLabel(label_start)
     instr += cond.instr
     instr += genInstr("JMPCOND", cond.outreg, False, label_end);
     instr += body.instr
@@ -184,6 +185,7 @@ def genWhileStmt(cond, body):
 
 def genFinal(code_seq):
     return code_seq.instr + genInstr("RET", lastAssignedReg)
+
 
 
 class CodeSequence:

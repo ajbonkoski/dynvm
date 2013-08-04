@@ -19,6 +19,7 @@ class CodeObject
 
   int[][string] unresovedRefs; // a string hashtable of int[] arrays
   @property auto complete(){ return unresovedRefs.length == 0; }
+  @property auto currentAddress() { return to!int(inst.length); }
 
   this()
   {

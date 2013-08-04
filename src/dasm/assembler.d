@@ -159,7 +159,7 @@ uint parseLiteral(CodeObject co, const char[] s)
   }
 }
 
-uint requireSBX(const char[] s, bool *success)
+uint requireSBX(const char[] s, int addr, bool *success)
 {
   *success = true;
 
@@ -174,7 +174,7 @@ uint requireSBX(const char[] s, bool *success)
 
       int *label_lineno = (s in labelMap);
       if(label_lineno) {
-        return int2sBx(*label_lineno - lineno);
+        return int2sBx(*label_lineno - (addr+1));
       }
 
       // admit failure (and sort it out latter)
@@ -191,21 +191,20 @@ uint requireSBX(const char[] s, bool *success)
   }
 }
 
-void updateLabelMap(string label)
+void updateLabelMap(string label, int addr)
 {
   if(label == "") return;
 
   // verify that all is well
   int *loc = (label in labelMap);
   if(loc) {
-    // +1 because internally we count from 0
     string msg = format("Duplicate labels detected. First seen at lineno %d,"
-                        "Seen again on lineno %d", *loc+1, lineno);
+                        "Seen again on lineno %d", *loc, lineno);
     throw new DynAssemblerException(msg);
   }
 
   // all good, add the label
-  labelMap[label] = lineno-1; // -1 here because addr start from zero internally
+  labelMap[label] = addr;
 }
 
 CodeObject assembleFile(File f, bool silent)
@@ -220,7 +219,7 @@ CodeObject assembleFile(File f, bool silent)
         continue;
 
       Line line = new Line(l);
-      updateLabelMap(line.label.idup);
+      updateLabelMap(line.label.idup, co.currentAddress);
       if(!line.is_instruction)
         continue;
 
@@ -252,7 +251,7 @@ CodeObject assembleFile(File f, bool silent)
         }
         case IFormat.isBx:
           bool success;
-          uint sbx = requireSBX(line.fieldA, &success);
+          uint sbx = requireSBX(line.fieldA, co.currentAddress, &success);
           // if we didn't succeed, we'll have to come back later to fix it up...
           if(!success) co.addUnresovedRef(line.fieldA.idup, lineno-1);
           co.addInstr(Instruction.create(op, sbx));

@@ -42,6 +42,16 @@ class DynObject
     assert(0, "Call attempted on uncallable DynObject");
   }
 
+  DynObject call(DynObject a)
+  {
+    assert(0, "Call attempted on uncallable DynObject");
+  }
+
+  DynObject call(DynObject a, DynObject b)
+  {
+    assert(0, "Call attempted on uncallable DynObject");
+  }
+
   DynObject get(string name)
   {
     if(name == parent_name)
@@ -182,6 +192,18 @@ class DynNativeBinFunc : DynFunc
       assert(args.length == 2);
       return func(args[0], args[1]);
     }
+  }
+
+  override DynObject call(DynObject a)
+  {
+    assert(bind !is null);
+    return func(bind, a);
+  }
+
+  override DynObject call(DynObject a, DynObject b)
+  {
+    assert(bind is null);
+    return func(a, b);
   }
 
   override string toString()

@@ -82,6 +82,12 @@ private void runLoop(State state, CodeObject co, bool silent)
         state.pc += offset;
         break;
 
+      case IOpcode.ADD:
+        auto obj_b = state.getRegister(inst.iABC.b);
+        auto obj_c = state.getRegister(inst.iABC.c);
+        auto obj_a = obj_b.get("__op_add").call(obj_b, obj_c);
+        state.setRegister(inst.iABC.a, obj_a);
+        break;
     }
   }
 }

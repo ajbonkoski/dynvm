@@ -23,6 +23,7 @@ enum IOpcode
     CALL,
     TEST,
     JMP,
+    ADD,
 }
 
 private struct IStruct(Fields...) { mixin(bitfields!(Fields)); }
@@ -55,6 +56,7 @@ IFormat[IOpcode.max+1] instrTable =
     IOpcode.CALL:        IFormat.iABC,
     IOpcode.TEST:        IFormat.iABx,
     IOpcode.JMP:         IFormat.isBx,
+    IOpcode.ADD:         IFormat.iABC,
 ];
 
 union IData

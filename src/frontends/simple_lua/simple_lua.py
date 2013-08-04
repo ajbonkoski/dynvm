@@ -166,7 +166,7 @@ def genIfStmt(if_data, elseif_data, else_data):
         instr += else_data.instr;
 
     instr += genLabel(label_end)
-    return instr
+    return [CodeSequence(instr, None)]
 
 def genWhileStmt(cond, body):
 
@@ -180,14 +180,24 @@ def genWhileStmt(cond, body):
     instr += genInstr("JMP", label_start);
 
     instr += genLabel(label_end)
-    return instr;
+    return [CodeSequence(instr, None)]
 
-def genEnd():
-    return genInstr("RET", lastAssignedReg);
-
-
+def genFinal(code_seq):
+    return code_seq.instr + genInstr("RET", lastAssignedReg)
 
 
+class CodeSequence:
+    def __init__(self, instr, outreg):
+        self.instr = instr
+        self.outreg = outreg
+
+    def toString(self, name):
+        s = "{} .text (outreg={})\n".format(name, self.outreg)
+        return s + self.instr + "\n"
+
+    @staticmethod
+    def join(arg):
+        return [CodeSequence(''.join(a.instr for a in arg), None)]
 
 def stringify(s): return "\"{}\"".format(s)
 
@@ -216,11 +226,11 @@ class Value:
 
     def ensureGen(self):
         if self.hasRegister():
-            return [Expr(self.instr, self.getRegister())]
+            return [CodeSequence(self.instr, self.getRegister())]
         else:
             regnum = allocTempReg()
             instr = self.storeTo(regnum)
-            return [Expr(instr, regnum)]
+            return [CodeSequence(instr, regnum)]
 
 class LValue(Value):
     def __init__(self): Value.__init__(self)
@@ -283,7 +293,7 @@ class Local(LValue):
     @assert_init
     def genAssign(self, source):
         instr = self.instr + source.storeTo(self.regnum)
-        return [Expr(instr, self.regnum)]
+        return [CodeSequence(instr, self.regnum)]
 
     @assert_init
     def storeTo(self, dest_regnum):
@@ -297,7 +307,7 @@ class Global(LValue):
     def genAssign(self, source):
         regnum = self.resolveSrcReg(source);
         instr = self.instr + genInstr("STOREGLOBAL", regnum, stringify(self.name))
-        return [Expr(instr, regnum)]
+        return [CodeSequence(instr, regnum)]
 
     def storeTo(self, regnum):
         return self.instr + genInstr("LOADGLOBAL", regnum, stringify(self.name))
@@ -349,16 +359,6 @@ class Member(LValue):
         regnum = self.resolveSrcReg(source);
         self_regnum = self.var.getRegister()
         instr = self.instr + genInstr("SETMEMBER", self_regnum, regnum, stringify(self.name))
-        return [Expr(instr, regnum)]
-
-
-class Expr:
-    def __init__(self, instr, outreg):
-        self.instr = instr
-        self.outreg = outreg
-
-    def toString(self, name):
-        s = "{} .text (outreg={})\n".format(name, self.outreg)
-        return s + self.instr + "\n"
+        return [CodeSequence(instr, regnum)]
 
 

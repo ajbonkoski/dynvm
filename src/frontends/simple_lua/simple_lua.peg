@@ -1,29 +1,30 @@
 lib { simple_lua }
 
-Grammar     <- S (Statement S)+ EOI               { merge_array(1, 0) + lib.genEnd()  }
+Grammar     <- S MStatement EOI                    { lib.genFinal(...1)  }
 
-Statement    <- EStatment   /
-                IfStatement /
+MStatement   <- (Statement S)+                     { lib.CodeSequence.join(arg_array3(0, 0)) }
+Statement    <- EStatement    /
+                IfStatement   /
                 WhileStatment                      {..0}
 
-EStatment    <- Expression S (';' S)*              {...0.instr}
-IfStatement  <- 'if'   SR Expression SR
-                'then' SR Expression SR
+EStatement   <- Expression S (';' S)*              {..0}
+IfStatement  <- 'if'   S Expression S
+                'then' S MStatement S
                 ElseIfStatement*
                 IfEndStatement                { lib.genIfStmt(
                                                       (...2, ...6),
                                                       arg_array1(8, 0, require=10),
                                                       Nth3(SZ-1)) }
 
-ElseIfStatement <- 'elseif' SR Expression SR 'then'
-                            SR Expression SR       {(...2, ...6)}
+ElseIfStatement <- 'elseif' S Expression S 'then'
+                            S MStatement S       {(...2, ...6)}
 
-ElseStatement <- 'else' SR Expression SR           {..2}
+ElseStatement <- 'else' S MStatement S           {..2}
 
 IfEndStatement <- ElseStatement? 'end'             { sel(..0, [None], 2) }
 
-WhileStatment <- 'while' SR Expression SR 'do'
-                         SR Expression SR 'end'    { lib.genWhileStmt(...2, ...6) }
+WhileStatment <- 'while' S Expression S 'do'
+                         S MStatement S 'end'    { lib.genWhileStmt(...2, ...6) }
 
 Expression   <- AssignExpr / BinOpExprGen          {..0}
 AssignExpr   <- LValue S '=' S BinOpExprP1         { ...0.genAssign(...4) }

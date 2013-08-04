@@ -1,0 +1,32 @@
+                    LITERAL         r100             #1
+                    LITERAL         r2               #100
+                    SETSELF         r2
+                    GET             r1               "__op_mul"
+                    LITERAL         r3               #1000
+                    CALL            r1               r1               r3
+                    MOVE            r0               r1
+                    LITERAL         r10              #0
+                    LITERAL         r20              #1
+                    LITERAL         r30              #0
+WHILE_START_0:
+                    MOVE            r53              r10
+                    SETSELF         r53
+                    GET             r52              "__op_lt"
+                    MOVE            r54              r0
+                    CALL            r52              r52              r54
+                    TEST            r52              #0
+                    JMP             WHILE_END_1
+
+                    MOVE   r55   r30
+                    ADD    r30   r20   r30
+                    MOVE   r20   r55
+                    ADD    r10   r10   r100
+
+                    JMP             WHILE_START_0
+WHILE_END_1:
+                    MOVE            r99              r30
+                    SETSELF         r99
+                    GET             r98              "__op_mul"
+                    CALL            r98              r98              r100
+                    RET             r98
+

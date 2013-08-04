@@ -1,24 +1,22 @@
-                    LITERAL         r100             #1
-                    LITERAL         r0               #100000
+                    ;; i
+                    LITERAL         r1              #0
 
-                    LITERAL         r10              #0
-                    LITERAL         r20              #1
-                    LITERAL         r30              #0
+                    ;; a, b
+                    LITERAL         r2              #1
+                    LITERAL         r3              #0
+
+                    LITERAL         r4             #1
+                    LITERAL         r5             #100000
 WHILE_START_0:
-                    SUB   r52  r0  r10
-                    TEST  r52  #0
+                    SUB   r0  r5  r1
+                    TEST  r0  #0
                     JMP   WHILE_END_1
 
-                    MOVE   r55   r30
-                    ADD    r30   r20   r30
-                    MOVE   r20   r55
-                    ADD    r10   r10   r100
+                    MOVE   r0   r3
+                    ADD    r3   r2   r3
+                    MOVE   r2   r0
+                    ADD    r1   r1   r4
 
                     JMP WHILE_START_0
 WHILE_END_1:
-                    MOVE            r99              r30
-                    SETSELF         r99
-                    GET             r98              "__op_mul"
-                    CALL            r98              r98              r100
-                    RET             r98
-
+                    RET  r3

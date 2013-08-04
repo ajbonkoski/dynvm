@@ -8,6 +8,7 @@ import dasm.literal;
 class DynObject
 {
   uint id;
+  DynObject parent;
   static uint next_id = 0;
   DynObject[string] table;
 
@@ -28,6 +29,26 @@ class DynObject
     assert(0, "Call attempted on uncallable DynObject");
   }
 
+  DynObject get(string name)
+  {
+    // search the inheritance chain
+    DynObject obj = this;
+    while(obj !is null) {
+      DynObject* val = (name in obj.table);
+      if(val)
+        return *val;
+      else
+        obj = obj.parent;
+    }
+
+    assert(false, format("get operation failed in DynObject for '%s'", name));
+  }
+
+  void set(string name, DynObject obj)
+  {
+    table[name] = obj;
+  }
+
   string toStringMembers()
   {
     string s;
@@ -43,15 +64,42 @@ class DynObject
   bool truthiness(){ return true; }
 }
 
+DynObject[string] classes;
+static this() {
+  classes["DynInt"]    = new DynIntClass();
+  classes["DynString"] = new DynStringClass();
+}
+
+class DynStringClass : DynObject
+{
+  this() {
+    table["__op_add"] = new DynNativeBinFunc(&NativeBinStrConcat);
+  }
+}
+
+class DynIntClass : DynObject
+{
+  this() {
+    table["__op_add"] = new DynNativeBinFunc(&NativeBinIntAdd);
+    table["__op_sub"] = new DynNativeBinFunc(&NativeBinIntSub);
+    table["__op_mul"] = new DynNativeBinFunc(&NativeBinIntMul);
+    table["__op_div"] = new DynNativeBinFunc(&NativeBinIntDiv);
+    table["__op_leq"] = new DynNativeBinFunc(&NativeBinIntLeq);
+    table["__op_lt" ] = new DynNativeBinFunc(&NativeBinIntLt);
+    table["__op_geq"] = new DynNativeBinFunc(&NativeBinIntGeq);
+    table["__op_gt" ] = new DynNativeBinFunc(&NativeBinIntGt);
+    table["__op_eq" ] = new DynNativeBinFunc(&NativeBinIntEq);
+    table["__op_neq"] = new DynNativeBinFunc(&NativeBinIntNeq);
+  }
+}
+
 class DynString : DynObject
 {
   string s;
   this(string s_)
   {
-    super();
     s = s_;
-
-    table["__op_add"] = new DynNativeBinFunc(&NativeBinStrConcat, this);
+    parent = classes["DynString"];
   }
 
   override string toString()
@@ -71,21 +119,12 @@ class DynString : DynObject
 class DynInt : DynObject
 {
   long i;
+
   this(long i_)
   {
-    super();
     i = i_;
-
-    table["__op_add"] = new DynNativeBinFunc(&NativeBinIntAdd, this);
-    table["__op_sub"] = new DynNativeBinFunc(&NativeBinIntSub, this);
-    table["__op_mul"] = new DynNativeBinFunc(&NativeBinIntMul, this);
-    table["__op_div"] = new DynNativeBinFunc(&NativeBinIntDiv, this);
-    table["__op_leq"] = new DynNativeBinFunc(&NativeBinIntLeq, this);
-    table["__op_lt" ] = new DynNativeBinFunc(&NativeBinIntLt,  this);
-    table["__op_geq"] = new DynNativeBinFunc(&NativeBinIntGeq, this);
-    table["__op_gt" ] = new DynNativeBinFunc(&NativeBinIntGt,  this);
-    table["__op_eq" ] = new DynNativeBinFunc(&NativeBinIntEq,  this);
-    table["__op_neq"] = new DynNativeBinFunc(&NativeBinIntNeq, this);
+    parent = classes["DynInt"];
+    assert(parent !is null);
   }
 
   override string toString()
@@ -109,12 +148,18 @@ class DynNativeBinFunc : DynFunc
 {
   NativeBinFunc func;
   DynObject bind;
-  this(NativeBinFunc func_, DynObject bind_){ super(); func = func_; bind = bind_; }
+  this(NativeBinFunc func_){ func = func_; }
+  this(NativeBinFunc func_, DynObject bind_){ func = func_; bind = bind_; }
 
   override DynObject call(DynObject[] args)
   {
-    assert(args.length == 1);
-    return func(bind, args[0]);
+    if(bind !is null) {
+      assert(args.length == 1);
+      return func(bind, args[0]);
+    } else {
+      assert(args.length == 2);
+      return func(args[0], args[1]);
+    }
   }
 
   override string toString()

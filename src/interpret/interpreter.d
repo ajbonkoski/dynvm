@@ -64,8 +64,9 @@ private void runLoop(State state, CodeObject co, bool silent)
         uint arg_num = inst.iABC.b+1;
         uint arg_end = inst.iABC.c;
         foreach(i; arg_num..arg_end+1)
-          args ~= state.getRegister(arg_num);
+          args ~= state.getRegister(i);
 
+        //writeln(args);
         auto obj = state.getRegister(inst.iABC.b).call(args);
         state.setRegister(inst.iABC.a, obj);
         break;

@@ -135,14 +135,16 @@ def genBinCall(val_a, ops_list):
 
     call_reg = allocTempReg()
     dest_reg = call_reg  # replace the function ptr with the ret val
-    arg_reg = allocTempReg()
+    arg_reg1 = allocTempReg()
+    arg_reg2 = allocTempReg()
 
     for op_name, val_b in ops_list:
         instr = ''
-        m = Member(val_a, binOpNameMap[op_name])
+        instr += val_a.storeTo(arg_reg1)
+        m = Member(Local.fromReg(arg_reg1), binOpNameMap[op_name])
         instr += m.storeTo(call_reg)
-        instr += val_b.storeTo(arg_reg)
-        instr += genInstr("CALL", dest_reg, call_reg, arg_reg)
+        instr += val_b.storeTo(arg_reg2)
+        instr += genInstr("CALL", dest_reg, call_reg, arg_reg2)
         val_a = Local.fromReg(dest_reg, instr)
 
     return [val_a]

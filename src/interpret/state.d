@@ -65,7 +65,7 @@ class State
     assert(self !is null);
     Literal l = frame.getLiteral(num);
     assert(l.type == LType.String);
-    return self.table[l.s];
+    return self.get(l.s);
   }
 
   void selfSet(uint num, DynObject obj)
@@ -73,7 +73,7 @@ class State
     assert(self !is null);
     Literal l = frame.getLiteral(num);
     assert(l.type == LType.String);
-    self.table[l.s] = obj;
+    return self.set(l.s, obj);
   }
 
   auto stringify(IndentedWriter iw)

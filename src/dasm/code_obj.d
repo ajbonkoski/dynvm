@@ -17,6 +17,8 @@ class CodeObject
   uint next_literal_id = 0;
   uint num_locals = 0;
 
+  int[][string] unresovedRefs; // a string hashtable of int[] arrays
+
   this()
   {
     uint_to_literal.length = init_size;
@@ -45,6 +47,17 @@ class CodeObject
     if(num >= num_locals)
       num_locals = num+1;
     return num;
+  }
+
+  void addUnresovedRef(string unresolved, int lineno)
+  {
+    int[]* line_array = (unresolved in unresovedRefs);
+    if(!line_array) {
+      unresovedRefs[unresolved] = new int[0];
+      line_array = (unresolved in unresovedRefs);
+    }
+
+    *line_array ~= lineno;
   }
 
   Literal getLiteral(uint i)

@@ -12,7 +12,8 @@ import dasm.code_obj;
 import dasm.literal;
 
 // global line tracking
-uint lineno = 0;
+int lineno = 0;
+int[string] labelMap;
 
 class DynAssemblerException : Exception
 {
@@ -95,10 +96,15 @@ class Line
 
     if(!iswhite(line[0])) {
       label = fields[0];
+      if(label[$-1] == ':')  // trim off colon if needed
+        label = label[0..$-1];
       fields = fields[1..$];
     } else {
       label = "".dup;
     }
+
+    if(fields.length <= 1 || opcode == "")
+      is_instruction = false;
   }
 
   @property char[] opcode() { return fields[0]; }
@@ -153,15 +159,53 @@ uint parseLiteral(CodeObject co, const char[] s)
   }
 }
 
-uint requireSBX(const char[] s)
+uint requireSBX(const char[] s, bool *success)
 {
+  *success = true;
+
   try {
-    enforce(s.length >= 2 && s[0] == '#');
-    return int2sBx(to!int(s[1..$]));
+    // is it a hand-computed offset?
+    if(s.length >= 2 && s[0] == '#') {
+      return int2sBx(to!int(s[1..$]));
+    }
+
+    // try it as a label
+    else {
+
+      int *label_lineno = (s in labelMap);
+      if(label_lineno) {
+        return int2sBx(*label_lineno - lineno);
+      }
+
+      // admit failure (and sort it out latter)
+      else {
+        *success = false;
+        return 0;
+      }
+
+    }
+
   } catch(Exception ex) {
     string msg = format("Failed to parse signed from %s on line %d", s, lineno);
     throw new DynAssemblerException(msg);
   }
+}
+
+void updateLabelMap(string label)
+{
+  if(label == "") return;
+
+  // verify that all is well
+  int *loc = (label in labelMap);
+  if(loc) {
+    // +1 because internally we count from 0
+    string msg = format("Duplicate labels detected. First seen at lineno %d,"
+                        "Seen again on lineno %d", *loc+1, lineno);
+    throw new DynAssemblerException(msg);
+  }
+
+  // all good, add the label
+  labelMap[label] = lineno-1; // -1 here because addr start from zero internally
 }
 
 CodeObject assembleFile(File f, bool silent)
@@ -176,6 +220,7 @@ CodeObject assembleFile(File f, bool silent)
         continue;
 
       Line line = new Line(l);
+      updateLabelMap(line.label.idup);
       if(!line.is_instruction)
         continue;
 
@@ -206,7 +251,10 @@ CodeObject assembleFile(File f, bool silent)
           break;
         }
         case IFormat.isBx:
-          uint sbx = requireSBX(line.fieldA);
+          bool success;
+          uint sbx = requireSBX(line.fieldA, &success);
+          // if we didn't succeed, we'll have to come back later to fix it up...
+          if(!success) co.addUnresovedRef(line.fieldA.idup, lineno-1);
           co.addInstr(Instruction.create(op, sbx));
           break;
       }

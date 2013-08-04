@@ -23,6 +23,7 @@ interpret/stack_frame.d  \
 interpret/state.d        \
 interpret/interpreter.d  \
 
+TESTER_FLAGS =
 TESTER_BIN = bin/tester
 TESTER_OBJ = bin/tester.o
 TESTER_SRC =             \
@@ -60,7 +61,7 @@ $(DYNVM_PROFILE_BIN): $(DYNVM_SRC)
 	rm -f $(DYNVM_OBJ)
 
 $(TESTER_BIN): $(TESTER_SRC)
-	$(DC) $(RELEASE_FLAGS) -of$@ $^
+	$(DC) $(TESTER_FLAGS) -of$@ $^
 	rm -f $(TESTER_OBJ)
 
 clean:

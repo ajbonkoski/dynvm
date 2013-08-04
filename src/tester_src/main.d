@@ -6,6 +6,7 @@ import std.string;
 import std.process;
 import std.conv;
 import std.getopt;
+import std.datetime;
 
 string TEST_DIR = "test";
 auto DYNVM_BIN_OPT = ["dynvm", "dynvm-debug", "dynvm-profile"];
@@ -180,11 +181,21 @@ int run()
   writef("\n");
 
   uint pass_count = 0;
+  StopWatch sw;
   foreach(testname; test_map.keys.sort) {
+
     auto test = test_map[testname];
-    writef("Running %-40s ", format("'%s':", testname));
+    writef("%-30s ", testname);
+    stdout.flush();
+
+    sw.reset();
+    sw.start();
     bool passed = test.run();
-    writef("%s\n", passed ? PASSED : FAILED);
+    sw.stop();
+
+    writef("%.3f             %s\n",
+           sw.peek().to!("seconds", double),
+           passed ? PASSED : FAILED);
 
     if(passed) {
       pass_count++;

@@ -37,10 +37,14 @@ def allocLabel(prefix):
     return "{}_{}".format(prefix, id)
 
 binOpNameMap = {
-    '+': '__op_add',
-    '-': '__op_sub',
-    '*': '__op_mul',
-    '/': '__op_div',
+    '+':  '__op_add',
+    '-':  '__op_sub',
+    '*':  '__op_mul',
+    '/':  '__op_div',
+    '<=': '__op_leq',
+    '<':  '__op_lt',
+    '>=': '__op_geq',
+    '>':  '__op_gt',
 }
 
 ######################### INSTRUCTIONS ##############################

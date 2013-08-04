@@ -2,6 +2,7 @@ module interpret.dyn_obj;
 
 import std.string;
 import std.algorithm;
+import std.conv;
 import dasm.literal;
 
 class DynObject
@@ -79,6 +80,10 @@ class DynInt : DynObject
     table["__op_sub"] = new DynNativeBinFunc(&NativeBinIntSub, this);
     table["__op_mul"] = new DynNativeBinFunc(&NativeBinIntMul, this);
     table["__op_div"] = new DynNativeBinFunc(&NativeBinIntDiv, this);
+    table["__op_leq"] = new DynNativeBinFunc(&NativeBinIntLeq, this);
+    table["__op_lt" ] = new DynNativeBinFunc(&NativeBinIntLt,  this);
+    table["__op_geq"] = new DynNativeBinFunc(&NativeBinIntGeq, this);
+    table["__op_gt" ] = new DynNativeBinFunc(&NativeBinIntGt,  this);
   }
 
   override string toString()
@@ -117,33 +122,23 @@ class DynNativeBinFunc : DynFunc
 }
 
 /*** Native Binary Functions ***/
-DynObject NativeBinIntAdd(DynObject a_, DynObject b_)
-{
-  auto a = cast(DynInt) a_;
-  auto b = cast(DynInt) b_;
-  return new DynInt(a.i + b.i);
+auto genNativeBinInt(string name, string op) { return
+  "DynObject NativeBinInt"~name~"(DynObject a_, DynObject b_)"~
+  "{"~
+      "auto a = cast(DynInt) a_;"~
+      "auto b = cast(DynInt) b_;"~
+      "return new DynInt(to!long(a.i "~op~" b.i));"~
+   "}";
 }
 
-DynObject NativeBinIntSub(DynObject a_, DynObject b_)
-{
-  auto a = cast(DynInt) a_;
-  auto b = cast(DynInt) b_;
-  return new DynInt(a.i - b.i);
-}
-
-DynObject NativeBinIntMul(DynObject a_, DynObject b_)
-{
-  auto a = cast(DynInt) a_;
-  auto b = cast(DynInt) b_;
-  return new DynInt(a.i * b.i);
-}
-
-DynObject NativeBinIntDiv(DynObject a_, DynObject b_)
-{
-  auto a = cast(DynInt) a_;
-  auto b = cast(DynInt) b_;
-  return new DynInt(a.i / b.i);
-}
+mixin(genNativeBinInt("Add", "+"));
+mixin(genNativeBinInt("Sub", "-"));
+mixin(genNativeBinInt("Mul", "*"));
+mixin(genNativeBinInt("Div", "/"));
+mixin(genNativeBinInt("Leq", "<="));
+mixin(genNativeBinInt("Lt",  "<"));
+mixin(genNativeBinInt("Geq", ">="));
+mixin(genNativeBinInt("Gt",  ">"));
 
 DynObject NativeBinStrConcat(DynObject a_, DynObject b_)
 {

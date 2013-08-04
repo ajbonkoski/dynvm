@@ -17,6 +17,7 @@ uint SEPARATOR_SIZE = 55;
 
 string PASSED = "\033[32mPASSED\033[0m";
 string FAILED = "\033[31mFAILED\033[0m";
+string BUILD_FAILED = "\033[31mBUILD FAILED\033[0m";
 
 class TesterError : Error { this(string s){ super(s); } }
 
@@ -58,6 +59,9 @@ abstract class Test
 
   bool valid(){ return testfile != "" && ansfile != ""; }
 
+  // by default, nothing to build
+  bool build() { return true; }
+
   // impl by subclass
   string getRequiredTestfileExt();
   bool run();
@@ -87,11 +91,23 @@ class SluaTest : Test
   this(string tf){ super(tf); }
   override string getRequiredTestfileExt(){ return ext; }
 
+  string CMD;
+  override bool build()
+  {
+    string cmd = format("cat %s/%s | slua -", TEST_DIR, testfile);
+    auto res = executeShell(cmd);
+    if(res.status != 0 || res.output == "")
+      return false;
+    CMD = format("echo '%s' | %s -s - | diff %s/%s -",
+                 res.output, DYNVM, TEST_DIR, ansfile);
+
+    return true;
+  }
+
   override bool run()
   {
-    string cmd = format("cat %s/%s | slua - | %s -s - | diff %s/%s -",
-                        TEST_DIR, testfile, DYNVM, TEST_DIR, ansfile);
-    auto res = executeShell(cmd);
+    assert(CMD != "");
+    auto res = executeShell(CMD);
     success = (res.status == 0);
     output = res.output;
 
@@ -187,6 +203,11 @@ int run()
     auto test = test_map[testname];
     writef("%-30s ", testname);
     stdout.flush();
+
+    if(!test.build()) {
+      writeln(BUILD_FAILED);
+      continue;
+    }
 
     sw.reset();
     sw.start();

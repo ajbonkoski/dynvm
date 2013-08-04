@@ -8,9 +8,20 @@ import dasm.literal;
 class DynObject
 {
   uint id;
-  DynObject parent;
   static uint next_id = 0;
   DynObject[string] table;
+
+  @property auto parent()
+  {
+    DynObject *obj = ("__parent__" in table);
+    if(obj) return *obj;
+    else    return null;
+  }
+
+  @property void parent(DynObject obj)
+  {
+    table["__parent__"] = obj;
+  }
 
   this(){ id = next_id++; }
 
@@ -100,6 +111,7 @@ class DynString : DynObject
   {
     s = s_;
     parent = classes["DynString"];
+    assert(parent !is null);
   }
 
   override string toString()

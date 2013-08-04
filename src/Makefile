@@ -33,16 +33,19 @@ DEBUG = $(DYNVM_DEBUG_BIN) $(TESTER_BIN)
 debug:  $(DEBUG)
 	@for dir in $(SUBDIRS) ; do \
 	echo $$dir ; $(MAKE) $(SILENT) -C $$dir all || exit 2; done
+	rm -f $(DYNVM_BIN) $(DYNVM_PROFILE_BIN)
 
 PROFILE = $(DYNVM_PROFILE_BIN) $(TESTER_BIN)
 profile:  $(PROFILE)
 	@for dir in $(SUBDIRS) ; do \
 	echo $$dir ; $(MAKE) $(SILENT) -C $$dir all || exit 2; done
+	rm -f $(DYNVM_RELEASE_BIN) $(DYNVM_PROFILE_BIN)
 
 RELEASE = $(DYNVM_BIN) $(TESTER_BIN)
 release: $(RELEASE)
 	@for dir in $(SUBDIRS) ; do \
 	echo $$dir ; $(MAKE) $(SILENT) -C $$dir all || exit 2; done
+	rm -f $(DYNVM_DEBUG_BIN) $(DYNVM_PROFILE_BIN)
 
 all: $(DYNVM_DEBUG_BIN) $(DYNVM_PROFILE_BIN) $(DYNVM_BIN) $(TESTER_BIN)
 	@for dir in $(SUBDIRS) ; do \

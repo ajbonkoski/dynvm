@@ -4,10 +4,16 @@
 \#*#
 .#*
 
+## Profiler output
+trace.log
+trace.def
+
 ## Binaries
 *.o
 *.pegc
 *.pegcc
 *.pyc
 dynvm
+dynvm-debug
+dynvm-profile
 tester

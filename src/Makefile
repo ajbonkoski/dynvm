@@ -6,12 +6,9 @@ DEBUG_FLAGS = -O -unittest
 RELEASE_FLAGS = -O -release -inline -noboundscheck
 PROFILE_FLAGS = -O -profile
 
-#FLAGS = $(DEBUG_FLAGS)
-#FLAGS = $(RELEASE_FLAGS)
-#FLAGS = $(PROFILE_FLAGS)
-
 DYNVM_BIN = bin/dynvm
 DYNVM_DEBUG_BIN = bin/dynvm-debug
+DYNVM_PROFILE_BIN = bin/dynvm-profile
 DYNVM_OBJ = bin/dynvm.o
 DYNVM_SRC =               \
 common/common.d          \
@@ -36,8 +33,17 @@ debug:  $(DEBUG)
 	@for dir in $(SUBDIRS) ; do \
 	echo $$dir ; $(MAKE) $(SILENT) -C $$dir all || exit 2; done
 
+PROFILE = $(DYNVM_PROFILE_BIN) $(TESTER_BIN)
+profile:  $(PROFILE)
+	@for dir in $(SUBDIRS) ; do \
+	echo $$dir ; $(MAKE) $(SILENT) -C $$dir all || exit 2; done
+
 RELEASE = $(DYNVM_BIN) $(TESTER_BIN)
 release: $(RELEASE)
+	@for dir in $(SUBDIRS) ; do \
+	echo $$dir ; $(MAKE) $(SILENT) -C $$dir all || exit 2; done
+
+all: $(DYNVM_DEBUG_BIN) $(DYNVM_PROFILE_BIN) $(DYNVM_BIN) $(TESTER_BIN)
 	@for dir in $(SUBDIRS) ; do \
 	echo $$dir ; $(MAKE) $(SILENT) -C $$dir all || exit 2; done
 
@@ -49,15 +55,15 @@ $(DYNVM_DEBUG_BIN): $(DYNVM_SRC)
 	$(DC) $(DEBUG_FLAGS) -of$@ $^
 	rm -f $(DYNVM_OBJ)
 
+$(DYNVM_PROFILE_BIN): $(DYNVM_SRC)
+	$(DC) $(PROFILE_FLAGS) -of$@ $^
+	rm -f $(DYNVM_OBJ)
+
 $(TESTER_BIN): $(TESTER_SRC)
 	$(DC) $(RELEASE_FLAGS) -of$@ $^
 	rm -f $(TESTER_OBJ)
 
-# test: $(SRC)
-# 	$(DC) $(FLAGS) -unittest -of$(BIN_TEST) $(SRC)
-# 	time ./$(BIN_TEST)
-
 clean:
-	rm -f $(RELEASE) $(DEBUG) $(BIN_TEST) *.o
+	rm -f $(RELEASE) $(DEBUG) $(PROFILE) $(BIN_TEST) *.o
 	for dir in $(SUBDIRS); do \
 	echo $$dir ; $(MAKE) -C $$dir clean || exit 2; done

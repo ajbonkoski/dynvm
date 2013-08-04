@@ -38,7 +38,7 @@ Literal     <- ObjLiteral / RawLiteral             {..0}
 ObjLiteral  <- '{' S '}'                           { [lib.NewObjLiteral()] }
 RawLiteral  <- IntLiteral / StrLiteral             { [lib.Literal(..0)] }
 
-IntLiteral  <- [0-9]+                              { '#'+merge(0) }
+IntLiteral  <- '-'? [0-9]+                         { '#'+merge() }
 StrLiteral  <- '"' (!'"' .)* '"'                   { stringify(merge(1, 3)) }
 Name        <- !Reserved [a-z]+                    { merge(1) }
 
@@ -47,7 +47,8 @@ Reserved    <- 'if' / 'then' / 'end' /
                'global' /
                BinOpP1 / BinOpP2 / BinOpP3
 
-BinOpP1     <- '<=' / '<' / '>=' / '>'             {..0}
+BinOpP1     <- '<=' / '<' / '>=' / '>' /
+               '!=' / '=='                         {..0}
 BinOpP2     <- '+' / '-'                           {..0}
 BinOpP3     <- '*' / '/'                           {..0}
 

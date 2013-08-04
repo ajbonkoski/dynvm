@@ -84,6 +84,8 @@ class DynInt : DynObject
     table["__op_lt" ] = new DynNativeBinFunc(&NativeBinIntLt,  this);
     table["__op_geq"] = new DynNativeBinFunc(&NativeBinIntGeq, this);
     table["__op_gt" ] = new DynNativeBinFunc(&NativeBinIntGt,  this);
+    table["__op_eq" ] = new DynNativeBinFunc(&NativeBinIntEq,  this);
+    table["__op_neq"] = new DynNativeBinFunc(&NativeBinIntNeq, this);
   }
 
   override string toString()
@@ -139,6 +141,8 @@ mixin(genNativeBinInt("Leq", "<="));
 mixin(genNativeBinInt("Lt",  "<"));
 mixin(genNativeBinInt("Geq", ">="));
 mixin(genNativeBinInt("Gt",  ">"));
+mixin(genNativeBinInt("Eq",  "=="));
+mixin(genNativeBinInt("Neq", "!="));
 
 DynObject NativeBinStrConcat(DynObject a_, DynObject b_)
 {

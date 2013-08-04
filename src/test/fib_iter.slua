@@ -1,0 +1,14 @@
+
+n = 100000;
+
+i = 0;
+a = 1; b = 0;
+while i<n do
+   t = b
+   b = a+b
+   a = t
+   i=i+1;
+end
+
+b*1
+

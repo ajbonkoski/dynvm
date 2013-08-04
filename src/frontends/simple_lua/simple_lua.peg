@@ -58,7 +58,7 @@ RawLiteral  <- IntLiteral / StrLiteral             { [lib.Literal(..0)] }
 
 IntLiteral  <- '-'? [0-9]+                         { '#'+merge() }
 StrLiteral  <- '"' (!'"' .)* '"'                   { stringify(merge(1, 3)) }
-Name        <- !Reserved [a-z]+                    { merge(1) }
+Name        <- !Reserved ('_'/[a-z])+              { merge(1) }
 
 
 Reserved    <- 'if' / 'then' / 'else' /

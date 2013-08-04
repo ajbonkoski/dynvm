@@ -11,17 +11,19 @@ class DynObject
   static uint next_id = 0;
   DynObject[string] table;
 
-  @property auto parent()
-  {
-    DynObject *obj = ("__parent__" in table);
-    if(obj) return *obj;
-    else    return null;
-  }
+  DynObject parent;
+  static string parent_name = "__parent__";
+  // @property auto parent()
+  // {
+  //   DynObject *obj = ("__parent__" in table);
+  //   if(obj) return *obj;
+  //   else    return null;
+  // }
 
-  @property void parent(DynObject obj)
-  {
-    table["__parent__"] = obj;
-  }
+  // @property void parent(DynObject obj)
+  // {
+  //   table["__parent__"] = obj;
+  // }
 
   this(){ id = next_id++; }
 
@@ -42,6 +44,9 @@ class DynObject
 
   DynObject get(string name)
   {
+    if(name == parent_name)
+      return parent;
+
     // search the inheritance chain
     DynObject obj = this;
     while(obj !is null) {
@@ -57,6 +62,11 @@ class DynObject
 
   void set(string name, DynObject obj)
   {
+    if(name == parent_name) {
+      parent = obj;
+      return;
+    }
+
     table[name] = obj;
   }
 

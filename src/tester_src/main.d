@@ -8,14 +8,31 @@ import std.conv;
 import std.getopt;
 
 string TEST_DIR = "test";
+auto DYNVM_BIN_OPT = ["dynvm", "dynvm-debug", "dynvm-profile"];
+string DYNVM; // this will be init to one of the binaries above
 auto BLACKLIST = [regex("#.*#"), regex(".*~")];
 string ANS_EXT = ".ans";
-uint SEPARATOR_SIZE = 45;
+uint SEPARATOR_SIZE = 55;
 
 string PASSED = "\033[32mPASSED\033[0m";
 string FAILED = "\033[31mFAILED\033[0m";
 
 class TesterError : Error { this(string s){ super(s); } }
+
+void select_binaries()
+{
+  // find DYNVM
+  foreach(dynvm; DYNVM_BIN_OPT) {
+    try {
+      if(isFile("bin/"~dynvm)) {
+        DYNVM = dynvm;
+        return;
+      }
+    }catch(FileException ex){}
+  }
+
+  throw new TesterError("Failed to find dynvm binary");
+}
 
 abstract class Test
 {
@@ -53,8 +70,8 @@ class DynasmTest : Test
 
   override bool run()
   {
-    string cmd = format("dynvm -s %s/%s | diff %s/%s -",
-                        TEST_DIR, testfile, TEST_DIR, ansfile);
+    string cmd = format("%s -s %s/%s | diff %s/%s -",
+                        DYNVM, TEST_DIR, testfile, TEST_DIR, ansfile);
     auto res = executeShell(cmd);
     success = (res.status == 0);
     output = res.output;
@@ -71,8 +88,8 @@ class SluaTest : Test
 
   override bool run()
   {
-    string cmd = format("cat %s/%s | slua - | dynvm -s - | diff %s/%s -",
-                        TEST_DIR, testfile, TEST_DIR, ansfile);
+    string cmd = format("cat %s/%s | slua - | %s -s - | diff %s/%s -",
+                        TEST_DIR, testfile, DYNVM, TEST_DIR, ansfile);
     auto res = executeShell(cmd);
     success = (res.status == 0);
     output = res.output;
@@ -150,6 +167,7 @@ void build_test_map()
 
 int run()
 {
+  select_binaries();
   build_test_map();
 
   // a nice python-style 'c'*5 string utility
@@ -157,14 +175,14 @@ int run()
   void write_separator(char c) { writeln(s(c, SEPARATOR_SIZE)); }
 
   write_separator('=');
-  writef("Running Tester with %d tests:\n", test_map.length);
+  writef("Running Tester with %d tests using '%s':\n", test_map.length, DYNVM);
   write_separator('=');
   writef("\n");
 
   uint pass_count = 0;
   foreach(testname; test_map.keys.sort) {
     auto test = test_map[testname];
-    writef("Running %-30s ", format("'%s':", testname));
+    writef("Running %-40s ", format("'%s':", testname));
     bool passed = test.run();
     writef("%s\n", passed ? PASSED : FAILED);
 

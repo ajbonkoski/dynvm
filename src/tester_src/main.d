@@ -184,7 +184,7 @@ int run()
   return pass_count == test_map.length ? 0 : 1;
 }
 
-bool SHOW_OUTPUT_ON_FAILURE = true;
+bool SHOW_OUTPUT_ON_FAILURE = false;
 
 int main(string[] args)
 {

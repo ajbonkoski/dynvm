@@ -1,0 +1,24 @@
+
+if      0  then  a=5
+elseif  1  then  a=8
+elseif  0  then  a=10
+else             a=11
+end
+
+b = 9
+if      0  then  b=2
+end
+
+c = 123
+if      0  then  c=98
+else             c=67
+end
+
+d = 423
+if      0  then  d=898
+elseif  0  then  d=867
+end
+
+res = a * b * c * d
+
+

@@ -149,24 +149,21 @@ def genBinCall(val_a, ops_list):
 
 
 def genIfStmt(if_data, elseif_data, else_data):
-    # print if_data
-    # print elseif_data
-    # print else_data
-    # print if_data[0].toString("if_cond"), if_data[1].toString("if_expr")
-    # for d in elseif_data: print d[0].toString("elseif_cond"), d[1].toString("elseif_expr"),
-    # print else_data.toString("else_expr"),
-    #exit(1)
 
     label_end = allocLabel("IF_END")
-
     instr = ''
+
     for cond, body in [if_data]+elseif_data:
-        instr += cond.instr
         label = allocLabel("IF")
+        instr += cond.instr
         instr += genInstr("JMPCOND", cond.outreg, False, label);
         instr += body.instr
         instr += genInstr("JMP", label_end)
         instr += genLabel(label)
+
+    # else?
+    if else_data:
+        instr += else_data.instr;
 
     instr += genLabel(label_end)
     return instr

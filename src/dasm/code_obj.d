@@ -51,7 +51,7 @@ class CodeObject
     return num;
   }
 
-  void addUnresovedRef(string unresolved, int lineno)
+  void addUnresovedRef(string unresolved)
   {
     int[]* line_array = (unresolved in unresovedRefs);
     if(!line_array) {
@@ -59,7 +59,7 @@ class CodeObject
       line_array = (unresolved in unresovedRefs);
     }
 
-    *line_array ~= lineno;
+    *line_array ~= currentAddress;
   }
 
   void resolveRefs(int[string] labelMap)

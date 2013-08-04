@@ -253,7 +253,7 @@ CodeObject assembleFile(File f, bool silent)
           bool success;
           uint sbx = requireSBX(line.fieldA, co.currentAddress, &success);
           // if we didn't succeed, we'll have to come back later to fix it up...
-          if(!success) co.addUnresovedRef(line.fieldA.idup, lineno-1);
+          if(!success) co.addUnresovedRef(line.fieldA.idup);
           co.addInstr(Instruction.create(op, sbx));
           break;
       }

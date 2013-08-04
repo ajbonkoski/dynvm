@@ -50,7 +50,7 @@ binOpNameMap = {
 }
 
 ######################### INSTRUCTIONS ##############################
-C1_SP  = ' '*15
+C1_SP  = ' '*20
 C2_OP  = '{:15}'
 C3_REG = ' r{:15}'
 C3_SBX = ' {}'
@@ -168,6 +168,19 @@ def genIfStmt(if_data, elseif_data, else_data):
     instr += genLabel(label_end)
     return instr
 
+def genWhileStmt(cond, body):
+
+    label_start = allocLabel("WHILE_START")
+    label_end = allocLabel("WHILE_END")
+
+    instr = genLabel(label_start)
+    instr += cond.instr
+    instr += genInstr("JMPCOND", cond.outreg, False, label_end);
+    instr += body.instr
+    instr += genInstr("JMP", label_start);
+
+    instr += genLabel(label_end)
+    return instr;
 
 def genEnd():
     return genInstr("RET", lastAssignedReg);

@@ -2,7 +2,10 @@ lib { simple_lua }
 
 Grammar     <- S (Statement S)+ EOI               { merge_array(1, 0) + lib.genEnd()  }
 
-Statement    <- EStatment / IfStatement            {..0}
+Statement    <- EStatment   /
+                IfStatement /
+                WhileStatment                      {..0}
+
 EStatment    <- Expression S (';' S)*              {...0.instr}
 IfStatement  <- 'if'   SR Expression SR
                 'then' SR Expression SR
@@ -18,6 +21,9 @@ ElseIfStatement <- 'elseif' SR Expression SR 'then'
 ElseStatement <- 'else' SR Expression SR           {..2}
 
 IfEndStatement <- ElseStatement? 'end'             { sel(..0, [None], 2) }
+
+WhileStatment <- 'while' SR Expression SR 'do'
+                         SR Expression SR 'end'    { lib.genWhileStmt(...2, ...6) }
 
 Expression   <- AssignExpr / BinOpExprGen          {..0}
 AssignExpr   <- LValue S '=' S BinOpExprP1         { ...0.genAssign(...4) }
@@ -56,6 +62,7 @@ Name        <- !Reserved [a-z]+                    { merge(1) }
 
 Reserved    <- 'if' / 'then' / 'else' /
                'elseif' / 'end' / 'global' /
+               'while' / 'do' /
                BinOpP1 / BinOpP2 / BinOpP3
 
 BinOpP1     <- '<=' / '<' / '>=' / '>' /

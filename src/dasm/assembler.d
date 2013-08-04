@@ -261,5 +261,11 @@ CodeObject assembleFile(File f, bool silent)
 
     }
 
+    co.resolveRefs(labelMap);
+    if(!co.complete) {
+      string msg = format("Failed to link the final object. Some references are unresolved.");
+      throw new DynAssemblerException(msg);
+    }
+
     return co;
 }

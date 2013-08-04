@@ -181,6 +181,12 @@ struct Instruction
           break;
         }
     }
+
+    void resolveRef(uint sBx)
+    {
+        assert(fmt == IFormat.isBx);
+        isBx.sbx = sBx;
+    }
 }
 
 unittest

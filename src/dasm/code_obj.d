@@ -18,6 +18,7 @@ class CodeObject
   uint num_locals = 0;
 
   int[][string] unresovedRefs; // a string hashtable of int[] arrays
+  @property auto complete(){ return unresovedRefs.length == 0; }
 
   this()
   {
@@ -58,6 +59,18 @@ class CodeObject
     }
 
     *line_array ~= lineno;
+  }
+
+  void resolveRefs(int[string] labelMap)
+  {
+    foreach(r; unresovedRefs.keys) {
+      int l = labelMap[r];
+      foreach(line; unresovedRefs[r]) {
+        uint offset = int2sBx(l - (line+1));
+        inst[line].resolveRef(offset);
+      }
+      unresovedRefs.remove(r);
+    }
   }
 
   Literal getLiteral(uint i)

@@ -21,14 +21,17 @@ class DynObject
 {
   uint id;
   static uint next_id = 0;
-  auto table = new DynvmHashTable!DynObject();
+  DynvmHashTable!DynObject table;
   //DynObject[string] table;
   int refcnt = 0;
 
   DynObject parent;
   static string parent_name = "__parent__";
 
-  this(){ id = next_id++; }
+  this(){
+    id = next_id++;
+    table = new DynvmHashTable!DynObject();
+  }
 
   void incref(){ refcnt++; }
   void decref(){ if(--refcnt <= 0) this.freed(); }
@@ -67,7 +70,7 @@ class DynObject
       return parent;
 
     // precompute the hash (to save time)
-    uint hash = table.computeHash(name);
+    ulong hash = table.computeHash(name);
 
     // search the inheritance chain
     DynObject obj = this;

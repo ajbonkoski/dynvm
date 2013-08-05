@@ -9,11 +9,13 @@ import std.process;
 import std.conv;
 import std.datetime;
 import std.c.stdlib;
+import std.regex;
 
 enum EXEC_MASK = 1<<6;
 enum SEPARATOR_SIZE = 55;
 enum LINE_SIZE = SEPARATOR_SIZE-20;
 enum REQUIRED_FILES = ["argv", "ans", "Makefile"];
+auto BLACKLIST = [regex("#.*#"), regex(".*~")];
 enum LANGUAGE_MAP = [
   "":          "C Language",
   "java.run":  "Java",
@@ -21,7 +23,26 @@ enum LANGUAGE_MAP = [
   "js":        "Javascript V8"
 ];
 
-string extToLang(string s) { return LANGUAGE_MAP[s]; }
+string extToLang(string s)
+{
+  try {
+    return LANGUAGE_MAP[s];
+  } catch(RangeError err) {
+    stderr.writef("Error: failed to lookup extention for %s\n", s);
+    exit(1);
+  }
+
+  // dead code, to apease the compiler
+  return "";
+}
+
+bool isBlacklisted(string name)
+{
+  foreach(r; BLACKLIST)
+    if(name.match(r))
+      return true;
+  return false;
+}
 
 // a nice python-style 'c'*5 string utility
 auto s(char c, ulong times) { char[] s; s.length = times; foreach(i; 0..times) s[i] = c; return s;}
@@ -90,8 +111,6 @@ int main(string[] args)
   auto dir = buildPath(args[0].dirName, args[1]);
   dir.verify_dir();
   auto subargs = buildPath(dir, "argv").readText.chomp;
-
-  writef("Building %s...\n", dir);
   build_dir(dir);
 
   write_separator('=');
@@ -99,9 +118,10 @@ int main(string[] args)
   write_separator('=');
 
   foreach(dirent; dirEntries(dir, SpanMode.shallow)) {
-    if(dirent.attributes & EXEC_MASK) {
+    if(dirent.baseName.isBlacklisted) continue;
+    if(dirent.attributes & EXEC_MASK)
       execute(dirent.name, subargs);
-    }
+
   }
 
   return 0;

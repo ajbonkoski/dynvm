@@ -2,3 +2,4 @@
 fib/fib
 *.dis
 *.class
+*.java.run

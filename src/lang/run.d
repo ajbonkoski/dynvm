@@ -15,7 +15,7 @@ enum EXEC_MASK = 1<<6;
 enum SEPARATOR_SIZE = 55;
 enum LINE_SIZE = SEPARATOR_SIZE-20;
 enum REQUIRED_FILES = ["argv", "ans", "Makefile"];
-auto BLACKLIST = [regex("#.*#"), regex(".*~")];
+auto BLACKLIST = [regex("#.*#"), regex(".*~"), regex(".#.*")];
 enum LANGUAGE_MAP = [
   "":          "C Language",
   "java.run":  "Java",
@@ -76,7 +76,7 @@ void verify_dir(string dir)
 
 void build_dir(string dir)
 {
-  string cmd = format("make -C %s", dir);
+  string cmd = format("make -C %s clean all", dir);
   auto res = executeShell(cmd);
   assert(res.status == 0, "Build failed");
 }

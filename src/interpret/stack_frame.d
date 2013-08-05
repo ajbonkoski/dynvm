@@ -31,7 +31,7 @@ class StackFrame
     assert(regnum < locals.length);
     DynObject old = locals[regnum];
     if(old !is null) old.decref();
-    obj.incref();
+    if(obj !is null) obj.incref();
     locals[regnum] = obj;
   }
 

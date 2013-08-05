@@ -8,12 +8,14 @@ import dasm.instructions;
 import interpret.dyn_obj;
 import interpret.state;
 
+enum LOUD = false;
+
 private void runLoop(State state, CodeObject co, bool silent)
 {
  EXECLOOP:
   while(true) {
     auto inst = state.fetchInstr();
-    //if(!silent) writeln(inst.toString());
+    if(LOUD) writeln(inst.toString());
 
     final switch(inst.opcode)
     {

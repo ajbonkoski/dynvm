@@ -6,6 +6,7 @@ import std.conv;
 alias
 //HashtableCustom
 HashtableDefault
+
 DynvmHashTable;
 
 /* The unified interface that should be expected */
@@ -64,8 +65,8 @@ class HashtableCustom(V) : Hashtable!V
 
   override final void set(string s, V v, ulong hash)
   {
-    import std.stdio;
-    writef("Adding %s to %d\n", s, hash);
+    //import std.stdio;
+    //writef("Adding %s to %d\n", s, hash);
     enforce(!table[hash]);
     table[hash] = v;
   }

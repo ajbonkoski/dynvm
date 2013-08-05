@@ -105,59 +105,39 @@ struct Instruction
     @property auto opcode() { return data.instr.opcode; }
     alias data this;  // allow user to access the IData union directly
 
-    static Instruction create(string T)(IOpcode op, uint a_, uint b_=0, uint c_=0)
-    {
-        Instruction i;
-
-        static if(T == "iABC") {
-          i.fmt = IFormat.iABC;
-          with(i.iABC) {
-            opcode = op;
-            a = a_; b = b_; c = c_;
-          }
-        } else static if(T == "iAB") {
-          i.fmt = IFormat.iAB;
-          with(i.iAB) {
-            opcode = op;
-            a = a_; b = b_; c = c_;
-          }
-        } else static if(T == "iA") {
-          i.fmt = IFormat.iA;
-          with(i.iA) {
-            opcode = op;
-            a = a_; b = b_; c = c_;
-          }
-        } else static if(T == "iABx") {
-          i.fmt = IFormat.iABx;
-          with(i.iABx) {
-            opcode = op;
-            a = a_; bx = b_;
-          }
-        } else static if(T == "isBx") {
-          i.fmt = IFormat.isBx;
-          with(i.isBx) {
-            opcode = op;
-            sbx = a_;
-          }
-        } else {
-          static assert(false, "Unrecognized instruction type in Instruction.create");
-        }
-
-        assert(i.fmt == instrTable[op]);
-
-        return i;
-    }
-
     static Instruction create(IOpcode op, uint a_, uint b_=0, uint c_=0)
     {
-      IFormat fmt = instrTable[op];
-      final switch(fmt) {
-        case IFormat.iABC:  return create!("iABC")(op, a_, b_, c_);
-        case IFormat.iAB:   return create!("iAB")(op, a_, b_, c_);
-        case IFormat.iA:   return create!("iA")(op, a_, b_, c_);
-        case IFormat.iABx:  return create!("iABx")(op, a_, b_, c_);
-        case IFormat.isBx: return create!("isBx")(op, a_, b_, c_);
+      Instruction i;
+      i.fmt = instrTable[op];
+      final switch(i.fmt) {
+
+        case IFormat.iABC: with(i.iABC) {
+          opcode = op;
+          a = a_; b = b_; c = c_;
+        } break;
+
+        case IFormat.iAB: with(i.iAB) {
+          opcode = op;
+          a = a_; b = b_; c = c_;
+        } break;
+
+        case IFormat.iA: with(i.iA) {
+          opcode = op;
+          a = a_; b = b_; c = c_;
+        } break;
+
+        case IFormat.iABx: with(i.iABx) {
+          opcode = op;
+          a = a_; bx = b_;
+        } break;
+
+        case IFormat.isBx: with(i.isBx) {
+          opcode = op;
+          sbx = a_;
+        } break;
       }
+
+      return i;
     }
 
     string toString()
@@ -212,7 +192,7 @@ unittest
     assert(i.iABx.a         == 0xff);
     assert(i.iABx.bx        == 0x3ffff);
 
-    i = Instruction.create!("iABx")(IOpcode.LOADGLOBAL, 5, 10);
+    i = Instruction.create(IOpcode.LOADGLOBAL, 5, 10);
     assert(i.opcode         == 0x1);
     assert(i.instr.opcode   == 0x1);
     assert(i.instr.rest     == 0xa05);

@@ -1,6 +1,8 @@
 SUBDIRS = frontends
 
 DC = dmd
+#DC = ldc2
+DC = gdc
 
 DEBUG_FLAGS = -O -unittest
 RELEASE_FLAGS = -O -release -inline -noboundscheck
@@ -13,6 +15,7 @@ DYNVM_OBJ = bin/dynvm.o
 DYNVM_SRC =               \
 common/common.d          \
 datastruct/stack.d       \
+datastruct/hashtable.d   \
 main.d                   \
 dasm/instructions.d      \
 dasm/literal.d           \

@@ -8,6 +8,7 @@ import std.conv;
 import common.common;
 import dasm.literal;
 import datastruct.stack;
+import datastruct.hashtable;
 
 auto writeObjectStats(IndentedWriter iw)
 {
@@ -20,7 +21,8 @@ class DynObject
 {
   uint id;
   static uint next_id = 0;
-  DynObject[string] table;
+  auto table = new DynvmHashTable!DynObject();
+  //DynObject[string] table;
   int refcnt = 0;
 
   DynObject parent;
@@ -64,14 +66,15 @@ class DynObject
     if(name == parent_name)
       return parent;
 
+    // precompute the hash (to save time)
+    uint hash = table.computeHash(name);
+
     // search the inheritance chain
     DynObject obj = this;
-    while(obj !is null) {
-      DynObject* val = (name in obj.table);
-      if(val)
-        return *val;
-      else
-        obj = obj.parent;
+    while(obj) {
+      DynObject* val = obj.table.get(name, hash);
+      if(val) return *val;
+      else    obj = obj.parent;
     }
 
     assert(false, format("get operation failed in DynObject for '%s'", name));
@@ -84,18 +87,19 @@ class DynObject
       return;
     }
 
-    table[name] = obj;
+    table.set(name, obj);
   }
 
   string toStringMembers()
   {
-    string s;
-    foreach(k; table.keys.sort) {
-      if(k.startsWith("__op_"))
-        continue;
-      s ~= format(", '%s'=%s", k, table[k]);
-    }
-    return s;
+    // string s;
+    // foreach(k; table.keys.sort) {
+    //   if(k.startsWith("__op_"))
+    //     continue;
+    //   s ~= format(", '%s'=%s", k, table[k]);
+    // }
+    // return s;
+    return "";
   }
 
   // generic objects are always true!
@@ -108,7 +112,7 @@ class DynStringClass : DynObject
   static this() { singleton = new DynStringClass(); }
 
   this() {
-    table["__op_add"] = new DynNativeBinFunc(&NativeBinStrConcat);
+    table.set("__op_add", new DynNativeBinFunc(&NativeBinStrConcat));
   }
 }
 
@@ -118,16 +122,16 @@ class DynIntClass : DynObject
   static this() { singleton = new DynIntClass(); }
 
   this() {
-    table["__op_add"] = new DynNativeBinFunc(&NativeBinIntAdd);
-    table["__op_sub"] = new DynNativeBinFunc(&NativeBinIntSub);
-    table["__op_mul"] = new DynNativeBinFunc(&NativeBinIntMul);
-    table["__op_div"] = new DynNativeBinFunc(&NativeBinIntDiv);
-    table["__op_leq"] = new DynNativeBinFunc(&NativeBinIntLeq);
-    table["__op_lt" ] = new DynNativeBinFunc(&NativeBinIntLt);
-    table["__op_geq"] = new DynNativeBinFunc(&NativeBinIntGeq);
-    table["__op_gt" ] = new DynNativeBinFunc(&NativeBinIntGt);
-    table["__op_eq" ] = new DynNativeBinFunc(&NativeBinIntEq);
-    table["__op_neq"] = new DynNativeBinFunc(&NativeBinIntNeq);
+    table.set("__op_add", new DynNativeBinFunc(&NativeBinIntAdd));
+    table.set("__op_sub", new DynNativeBinFunc(&NativeBinIntSub));
+    table.set("__op_mul", new DynNativeBinFunc(&NativeBinIntMul));
+    table.set("__op_div", new DynNativeBinFunc(&NativeBinIntDiv));
+    table.set("__op_leq", new DynNativeBinFunc(&NativeBinIntLeq));
+    table.set("__op_lt" , new DynNativeBinFunc(&NativeBinIntLt));
+    table.set("__op_geq", new DynNativeBinFunc(&NativeBinIntGeq));
+    table.set("__op_gt" , new DynNativeBinFunc(&NativeBinIntGt));
+    table.set("__op_eq" , new DynNativeBinFunc(&NativeBinIntEq));
+    table.set("__op_neq", new DynNativeBinFunc(&NativeBinIntNeq));
   }
 
   auto pool = new Stack!DynInt;

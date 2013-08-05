@@ -1,3 +1,5 @@
+#!/usr/bin/python
+from sys import argv
 
 def fib(n):
     SZ = 2**64
@@ -13,5 +15,4 @@ def fib(n):
     return b
 
 if __name__ == '__main__':
-    print fib(100000)
-
+    print fib(int(argv[1]))

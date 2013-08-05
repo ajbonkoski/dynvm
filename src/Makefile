@@ -2,7 +2,7 @@ SUBDIRS = frontends
 
 DC = dmd
 #DC = ldc2
-DC = gdc
+#DC = gdc
 
 DEBUG_FLAGS = -O -unittest
 RELEASE_FLAGS = -O -release -inline -noboundscheck

@@ -4,7 +4,7 @@ DC = dmd
 #DC = ldc2
 #DC = gdc
 
-DEBUG_FLAGS = -O -unittest -debug
+DEBUG_FLAGS = -O -unittest -debug -gc
 RELEASE_FLAGS = -O -release -inline -noboundscheck
 PROFILE_FLAGS = -O -profile -release -inline -noboundscheck
 

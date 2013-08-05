@@ -1,4 +1,4 @@
-#!/usr/local/bin/rdmd
+#!/usr/local/bin/rdmd --preserve-path
 
 import std.stdio;
 import std.path;
@@ -37,18 +37,20 @@ void execute(string cmd)
 
   sw.start();
   auto res = executeShell(cmd);
-  assert(res.status == 0, format("Failed to execute '%s'", cmd));
   sw.stop();
 
-  write_output_line(cmd, sw.peek().to!("seconds", double),
-);
+  if(res.status == 0)
+    write_output_line(cmd, sw.peek().to!("seconds", double));
+  else
+    write_output_line(cmd, "FAILED");
 }
 
 void main(string[] args)
 {
   enforce(args.length >= 3);
-  auto dir = args[1];
+  auto dir = buildNormalizedPath(args[0].dirName, args[1]);
   auto subargs = join(args[2..$]);
+  writeln(dir);
 
   writef("Building %s...\n", dir);
   build_dir(dir);
@@ -62,5 +64,10 @@ void main(string[] args)
       execute(format("./%s %s", dirent.name, subargs));
     }
   }
+
+
+  // I Hate this being here, but rdmd doesn't cleanup properly, so here it is...
+  remove(args[0]);   // delete self, so its not accidently called
+  remove(buildNormalizedPath(args[0].dirName, "rdmd.deps"));
 
 }

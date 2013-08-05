@@ -1,13 +1,17 @@
 
-n = 100000
-SZ = 2**64
+def fib(n):
+    SZ = 2**64
 
-i = 0
-a, b = 1, 0
-while i < n:
-    t = b
-    b = (b + a) % SZ
-    a = t
-    i += 1
+    i = 0
+    a, b = 1, 0
+    while i < n:
+        t = b
+        b = (b + a) % SZ
+        a = t
+        i += 1
 
-print b
+    return b
+
+if __name__ == '__main__':
+    print fib(100000)
+

@@ -29,6 +29,9 @@ class StackFrame
   void setRegister(uint regnum, DynObject obj)
   {
     assert(regnum < locals.length);
+    DynObject old = locals[regnum];
+    if(old !is null) old.decref();
+    obj.incref();
     locals[regnum] = obj;
   }
 

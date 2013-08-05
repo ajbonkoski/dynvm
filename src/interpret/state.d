@@ -93,6 +93,11 @@ class State
     frame.stringify(iw);
     iw.unindent();
 
+    iw.formattedWrite("Object Stats:\n");
+    iw.indent();
+    iw.writeObjectStats();
+    iw.unindent();
+
     return iw;
   }
 

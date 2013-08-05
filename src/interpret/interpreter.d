@@ -13,7 +13,7 @@ private void runLoop(State state, CodeObject co, bool silent)
  EXECLOOP:
   while(true) {
     auto inst = state.fetchInstr();
-    if(!silent) writeln(inst.toString());
+    //if(!silent) writeln(inst.toString());
 
     final switch(inst.opcode)
     {

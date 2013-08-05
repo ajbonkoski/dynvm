@@ -1,31 +1,38 @@
 module interpret.dyn_obj;
 
+import std.format;
+
 import std.string;
 import std.algorithm;
 import std.conv;
+import common.common;
 import dasm.literal;
+import datastruct.stack;
+
+auto writeObjectStats(IndentedWriter iw)
+{
+  iw.formattedWrite("next_id: %d\n", DynObject.next_id);
+  iw.formattedWrite("DynIntClass pool dealloc count: %d\n", DynIntClass.singleton.pool_dealloc_cnt);
+  return iw;
+}
 
 class DynObject
 {
   uint id;
   static uint next_id = 0;
   DynObject[string] table;
+  int refcnt = 0;
 
   DynObject parent;
   static string parent_name = "__parent__";
-  // @property auto parent()
-  // {
-  //   DynObject *obj = ("__parent__" in table);
-  //   if(obj) return *obj;
-  //   else    return null;
-  // }
-
-  // @property void parent(DynObject obj)
-  // {
-  //   table["__parent__"] = obj;
-  // }
 
   this(){ id = next_id++; }
+
+  void incref(){ refcnt++; }
+  void decref(){ if(--refcnt <= 0) this.freed(); }
+
+  // ignore the freed signal by default
+  void freed(){}
 
   override string toString()
   {
@@ -95,14 +102,11 @@ class DynObject
   bool truthiness(){ return true; }
 }
 
-DynObject[string] classes;
-static this() {
-  classes["DynInt"]    = new DynIntClass();
-  classes["DynString"] = new DynStringClass();
-}
-
 class DynStringClass : DynObject
 {
+  static DynStringClass singleton;
+  static this() { singleton = new DynStringClass(); }
+
   this() {
     table["__op_add"] = new DynNativeBinFunc(&NativeBinStrConcat);
   }
@@ -110,6 +114,9 @@ class DynStringClass : DynObject
 
 class DynIntClass : DynObject
 {
+  static DynIntClass singleton;
+  static this() { singleton = new DynIntClass(); }
+
   this() {
     table["__op_add"] = new DynNativeBinFunc(&NativeBinIntAdd);
     table["__op_sub"] = new DynNativeBinFunc(&NativeBinIntSub);
@@ -122,6 +129,36 @@ class DynIntClass : DynObject
     table["__op_eq" ] = new DynNativeBinFunc(&NativeBinIntEq);
     table["__op_neq"] = new DynNativeBinFunc(&NativeBinIntNeq);
   }
+
+  auto pool = new Stack!DynInt;
+  int pool_dealloc_cnt = 0;
+  DynInt allocate(long i)
+  {
+    if(pool.length) {
+      DynInt di = pool.pop();
+      di.refcnt = 0;
+      di.init(i);
+      return di;
+    }
+
+    else
+      return new DynInt(i);
+  }
+
+  void deallocate(DynInt di)
+  {
+    //import std.stdio;
+    //writeln("DynInt dealloc\n");
+    pool.push(di);
+    pool_dealloc_cnt++;
+  }
+
+}
+
+DynObject[string] classes;
+static this() {
+  classes["DynInt"]    = DynIntClass.singleton;
+  classes["DynString"] = DynStringClass.singleton;
 }
 
 class DynString : DynObject
@@ -130,7 +167,7 @@ class DynString : DynObject
   this(string s_)
   {
     s = s_;
-    parent = classes["DynString"];
+    parent = DynStringClass.singleton;
     assert(parent !is null);
   }
 
@@ -152,11 +189,18 @@ class DynInt : DynObject
 {
   long i;
 
-  this(long i_)
+  private this(long i_)
   {
     i = i_;
-    parent = classes["DynInt"];
+    parent = DynIntClass.singleton;
     assert(parent !is null);
+  }
+
+  private void init(long i_) { i = i_; }
+
+  override void freed()
+  {
+    DynIntClass.singleton.deallocate(this);
   }
 
   override string toString()
@@ -218,7 +262,7 @@ auto genNativeBinInt(string name, string op) { return
   "{"~
       "auto a = cast(DynInt) a_;"~
       "auto b = cast(DynInt) b_;"~
-      "return new DynInt(to!long(a.i "~op~" b.i));"~
+      "return DynIntClass.singleton.allocate(to!long(a.i "~op~" b.i));"~
    "}";
 }
 
@@ -248,7 +292,7 @@ struct DynObjectBuiltin
     final switch(val.type)
     {
       case LType.String:  return new DynString(val.s);
-      case LType.Int:     return new DynInt(val.i);
+      case LType.Int:     return DynIntClass.singleton.allocate(val.i);
     }
   }
 

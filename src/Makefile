@@ -39,7 +39,7 @@ PROFILE = $(DYNVM_PROFILE_BIN) $(TESTER_BIN)
 profile:  $(PROFILE)
 	@for dir in $(SUBDIRS) ; do \
 	echo $$dir ; $(MAKE) $(SILENT) -C $$dir all || exit 2; done
-	rm -f $(DYNVM_RELEASE_BIN) $(DYNVM_PROFILE_BIN)
+	rm -f $(DYNVM_BIN) $(DYNVM_DEBUG_BIN)
 
 RELEASE = $(DYNVM_BIN) $(TESTER_BIN)
 release: $(RELEASE)

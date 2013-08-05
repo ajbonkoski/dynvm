@@ -73,7 +73,7 @@ private void runLoop(State state, CodeObject co, bool silent)
 
       case IOpcode.TEST:
         bool t  = state.getRegister(inst.iABx.a).truthiness;
-        bool tl = state.getLiteralObj(inst.iABx.bx).truthiness;
+        bool tl = state.getLiteral(inst.iABx.bx).truthiness;
         if(t != tl) state.pc += 1;
         break;
 

@@ -4,7 +4,7 @@ DC = dmd
 
 DEBUG_FLAGS = -O -unittest
 RELEASE_FLAGS = -O -release -inline -noboundscheck
-PROFILE_FLAGS = -O -profile
+PROFILE_FLAGS = -O -profile -release -inline -noboundscheck
 
 DYNVM_BIN = bin/dynvm
 DYNVM_DEBUG_BIN = bin/dynvm-debug

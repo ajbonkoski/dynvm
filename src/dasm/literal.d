@@ -60,4 +60,13 @@ struct Literal
     }
   }
 
+  bool truthiness() const
+  {
+    final switch(type)
+    {
+      case LType.String: return s.length != 0;
+      case LType.Int:    return i != 0;
+    }
+  }
+
 }

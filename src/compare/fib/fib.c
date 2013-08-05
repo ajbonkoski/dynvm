@@ -2,7 +2,7 @@
 #include <stdlib.h>
 typedef unsigned long ulong;
 
-void main(int argc, char *argv[])
+int main(int argc, char *argv[])
 {
     ulong n = atoi(argv[1]);
     ulong a = 1;
@@ -16,4 +16,5 @@ void main(int argc, char *argv[])
     }
 
     printf("%lu\n", b);
+    return 0;
 }

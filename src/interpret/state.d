@@ -14,7 +14,8 @@ class State
 {
   DynObject[string] globals;
   auto stack = new Stack!(StackFrame)();  // contains all non active frames
-  @property auto frame() { return stack.top(); }
+  //@property auto frame() { return stack.top(); }
+  StackFrame frame;
   alias frame this; // allow the user to directly call methods on the to StackFrame
 
   DynObject _self;
@@ -37,13 +38,18 @@ class State
 
   void pushFrame(StackFrame sf)
   {
-    stack.push(sf);
+    if(frame !is null)
+      stack.push(frame);
+    frame = sf;
   }
 
   StackFrame popFrame()
   {
-    assert(!stack.isEmpty());
-    return stack.pop();
+    assert(frame !is null);
+    auto ret = frame;
+    if(stack.isEmpty)
+      frame = null;
+    return ret;
   }
 
   DynObject getGlobal(uint num)

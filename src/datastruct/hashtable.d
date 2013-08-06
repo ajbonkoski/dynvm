@@ -4,8 +4,8 @@ import std.conv;
 
 /* This alias sets up which impl is used */
 alias
-//HashtableCustom
-HashtableDefault
+HashtableCustom
+//HashtableDefault
 
 DynvmHashTable;
 
@@ -34,41 +34,42 @@ private enum GetSetWrappers =
 /**************************************************************/
 private:
 
+struct Pair(V)
+{
+  string key;
+  V value;
+}
+
 class HashtableCustom(V) : Hashtable!V
 {
   mixin(GetSetWrappers);
 
-  static immutable SZ = 10000;
-  V[SZ] table;
+  static immutable SZ = 100;
+  Pair!V[][SZ] table;
 
   override final ulong computeHash(string s)
   {
-    s = s[5..$];
-
-    ulong h = 0;
-    foreach(c; s) {
-      h += c.to!ulong;
-      h <<= 7;
-    }
-    return h%SZ;
-
-    // return
-    //   (to!uint(s[$-3]) +
-    //    to!uint(s[$-2]) +
-    //    to!uint(s[$-1])) % SZ;
+    return s[$-1].to!ulong % SZ;
   }
 
   override final V* get(string s, ulong hash)
   {
-    return &table[hash];
+    auto data = table[hash];
+    if(data.length == 1)
+      return &data[0].value;
+
+    foreach(pair; data) {
+      if(pair.key == s)
+        return &pair.value;
+    }
+
+    return null;
   }
 
   override final void set(string s, V v, ulong hash)
   {
-    //import std.stdio;
-    //writef("Adding %s to %d\n", s, hash);
-    enforce(!table[hash]);
-    table[hash] = v;
+    Pair!V p; p.key = s; p.value = v;
+    table[hash] ~= p;
   }
 
 }

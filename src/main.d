@@ -1,3 +1,4 @@
+import core.memory;
 import std.stdio;
 import std.conv;
 import std.getopt;

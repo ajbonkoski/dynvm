@@ -33,8 +33,8 @@ class DynObject
     table = new DynvmHashTable!DynObject();
   }
 
-  void incref(){ refcnt++; }
-  void decref(){ if(--refcnt <= 0) this.freed(); }
+  final void incref(){ refcnt++; }
+  final void decref(){ if(--refcnt <= 0) this.freed(); }
 
   // ignore the freed signal by default
   void freed(){}
@@ -64,7 +64,7 @@ class DynObject
     assert(0, "Call attempted on uncallable DynObject");
   }
 
-  DynObject get(string name)
+  final DynObject get(string name)
   {
     if(name == parent_name)
       return parent;
@@ -83,7 +83,7 @@ class DynObject
     assert(false, format("get operation failed in DynObject for '%s'", name));
   }
 
-  void set(string name, DynObject obj)
+  final void set(string name, DynObject obj)
   {
     if(name == parent_name) {
       parent = obj;

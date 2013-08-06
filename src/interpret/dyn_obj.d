@@ -142,17 +142,28 @@ class DynIntClass : DynObject
   static DynIntClass singleton;
   static this() { singleton = new DynIntClass(); }
 
+// mixin(genNativeBinInt("Add", "+"));
+// mixin(genNativeBinInt("Sub", "-"));
+// mixin(genNativeBinInt("Mul", "*"));
+// mixin(genNativeBinInt("Div", "/"));
+// mixin(genNativeBinInt("Leq", "<="));
+// mixin(genNativeBinInt("Lt",  "<"));
+// mixin(genNativeBinInt("Geq", ">="));
+// mixin(genNativeBinInt("Gt",  ">"));
+// mixin(genNativeBinInt("Eq",  "=="));
+// mixin(genNativeBinInt("Neq", "!="));
+
   this() {
-    table.set("__op_add", new DynNativeBinFunc(&NativeBinIntAdd));
-    table.set("__op_sub", new DynNativeBinFunc(&NativeBinIntSub));
-    table.set("__op_mul", new DynNativeBinFunc(&NativeBinIntMul));
-    table.set("__op_div", new DynNativeBinFunc(&NativeBinIntDiv));
-    table.set("__op_leq", new DynNativeBinFunc(&NativeBinIntLeq));
-    table.set("__op_lt" , new DynNativeBinFunc(&NativeBinIntLt));
-    table.set("__op_geq", new DynNativeBinFunc(&NativeBinIntGeq));
-    table.set("__op_gt" , new DynNativeBinFunc(&NativeBinIntGt));
-    table.set("__op_eq" , new DynNativeBinFunc(&NativeBinIntEq));
-    table.set("__op_neq", new DynNativeBinFunc(&NativeBinIntNeq));
+    table.set("__op_add", new DynNativeBinInt!("+"));
+    table.set("__op_sub", new DynNativeBinInt!("-"));
+    table.set("__op_mul", new DynNativeBinInt!("*"));
+    table.set("__op_div", new DynNativeBinInt!("/"));
+    table.set("__op_leq", new DynNativeBinInt!("<="));
+    table.set("__op_lt" , new DynNativeBinInt!("<"));
+    table.set("__op_geq", new DynNativeBinInt!(">="));
+    table.set("__op_gt" , new DynNativeBinInt!(">"));
+    table.set("__op_eq" , new DynNativeBinInt!("=="));
+    table.set("__op_neq", new DynNativeBinInt!("!="));
   }
 
   auto pool = new Stack!DynInt;
@@ -242,10 +253,10 @@ class DynInt : DynObject
   override bool truthiness(){ return i != 0; }
 }
 
-abstract class DynFunc : DynObject {}
+//abstract class DynFunc : DynObject {}
 
 alias DynObject function(DynObject a, DynObject b) NativeBinFunc;
-class DynNativeBinFunc : DynFunc
+class DynNativeBinFunc : DynObject
 {
   NativeBinFunc func;
   DynObject bind;
@@ -282,25 +293,32 @@ class DynNativeBinFunc : DynFunc
 }
 
 /*** Native Binary Functions ***/
-auto genNativeBinInt(string name, string op) { return
-  "DynObject NativeBinInt"~name~"(DynObject a_, DynObject b_)"~
-  "{"~
-      "auto a = cast(DynInt) a_;"~
-      "auto b = cast(DynInt) b_;"~
-      "return DynIntClass.singleton.allocate(to!long(a.i "~op~" b.i));"~
-   "}";
-}
+final class DynNativeBinInt(string op) : DynObject
+{
 
-mixin(genNativeBinInt("Add", "+"));
-mixin(genNativeBinInt("Sub", "-"));
-mixin(genNativeBinInt("Mul", "*"));
-mixin(genNativeBinInt("Div", "/"));
-mixin(genNativeBinInt("Leq", "<="));
-mixin(genNativeBinInt("Lt",  "<"));
-mixin(genNativeBinInt("Geq", ">="));
-mixin(genNativeBinInt("Gt",  ">"));
-mixin(genNativeBinInt("Eq",  "=="));
-mixin(genNativeBinInt("Neq", "!="));
+  final DynInt f(DynObject a_, DynObject b_) {
+    auto a = cast(DynInt) a_;
+    auto b = cast(DynInt) b_;
+    return DynIntClass.singleton.allocate(mixin("a.i"~op~"b.i").to!long);
+  }
+
+  override DynObject call(DynObject[] args)
+  {  assert(args.length == 2); return f(args[0], args[1]);  }
+
+  override DynObject call(DynObject a)
+  {
+    assert(false);
+  }
+
+  override DynObject call(DynObject a, DynObject b)
+  {  return f(a, b);  }
+
+  override string toString()
+  {
+    return format("DynNativeBinInt(id=%d)", id);
+  }
+
+}
 
 DynObject NativeBinStrConcat(DynObject a_, DynObject b_)
 {

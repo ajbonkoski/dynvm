@@ -229,13 +229,14 @@ def genIfStmt(if_data, elseif_data, else_data):
 def genWhileStmt(cond, body):
 
     label_start = allocLabel("WHILE_START")
+    label_cond = allocLabel("WHILE_COND")
     label_end = allocLabel("WHILE_END")
     instr = ''
 
-    instr += cond.instr
-    instr += genInstr("JMPCOND", cond.outreg, False, label_end);
+    instr += genInstr("JMP", label_cond);
     instr += genLabel(label_start)
     instr += body.instr
+    instr += genLabel(label_cond)
     instr += cond.instr
     instr += genInstr("JMPCOND", cond.outreg, True, label_start);
     instr += genLabel(label_end)

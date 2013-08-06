@@ -1,9 +1,9 @@
 
-n = 100*1000;
+n = 1000000;
 
 i = 0;
 a = 1; b = 0;
-while i<n do
+while n-i do
    t = b
    b = a+b
    a = t

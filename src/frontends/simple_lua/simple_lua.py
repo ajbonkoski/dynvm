@@ -37,16 +37,16 @@ def allocLabel(prefix):
     return "{}_{}".format(prefix, id)
 
 binOpNameMap = {
-    '+':  '__op_add',
-    '-':  '__op_sub',
-    '*':  '__op_mul',
-    '/':  '__op_div',
-    '<=': '__op_leq',
-    '<':  '__op_lt',
-    '>=': '__op_geq',
-    '>':  '__op_gt',
-    '==': '__op_eq',
-    '!=': '__op_neq',
+    '+':  ('__op_add', 'ADD'),
+    '-':  ('__op_sub', 'SUB'),
+    '*':  ('__op_mul',  None),
+    '/':  ('__op_div',  None),
+    '<=': ('__op_leq',  None),
+    '<':  ('__op_lt',   None),
+    '>=': ('__op_geq',  None),
+    '>':  ('__op_gt',   None),
+    '==': ('__op_eq',   None),
+    '!=': ('__op_neq',  None),
 }
 
 ######################### INSTRUCTIONS ##############################
@@ -106,6 +106,8 @@ instructions = {
     'TEST':         (genInstr_iABx, LOAD_NO),
     'JMP':          (genInstr_isBx, LOAD_NO),
     'JMPCOND':      (genInstr_iJc,  LOAD_NO),  ## aggregate type
+    'ADD':          (genInstr_iABC, LOAD_YES),
+    'SUB':          (genInstr_iABC, LOAD_YES),
 }
 
 class UnknownInstruction(Exception): pass
@@ -140,12 +142,32 @@ def genBinCall(val_a, ops_list):
 
     for op_name, val_b in ops_list:
         instr = ''
-        instr += val_a.storeTo(arg_reg1)
-        m = Member(Local.fromReg(arg_reg1), binOpNameMap[op_name])
-        instr += m.storeTo(call_reg)
-        instr += val_b.storeTo(arg_reg2)
-        instr += genInstr("CALL", dest_reg, call_reg, arg_reg2)
-        val_a = Local.fromReg(dest_reg, instr)
+        op_field, op_instr = binOpNameMap[op_name]
+
+        ## this op has a dedicated instr?
+        if op_instr != None:
+            co1 = val_a.ensureGen()
+            instr += co1[0].instr
+            co2 = val_b.ensureGen()
+            instr += co2[0].instr
+
+            def createFutureCallback(op_instr, A, B):
+                def f(destreg):
+                    return genInstr(op_instr, destreg, A, B)
+                return f
+
+            val_a = DeferedRValue(Future(
+                       createFutureCallback(op_instr, co1[0].outreg, co2[0].outreg),
+                       instr))
+
+        ## no dedicated instr... slow way...
+        else:
+            instr += val_a.storeTo(arg_reg1)
+            m = Member(Local.fromReg(arg_reg1), op_field)
+            instr += m.storeTo(call_reg)
+            instr += val_b.storeTo(arg_reg2)
+            instr += genInstr("CALL", dest_reg, call_reg, arg_reg2)
+            val_a = Local.fromReg(dest_reg, instr)
 
     return [val_a]
 
@@ -252,6 +274,20 @@ class RValue(Value):
     def getRegister(self): assert(False)
     def genAssign(self, source): assert(False)
 
+class Future:
+    def __init__(self, callable, instr):
+        self.callable = callable
+        self.instr = instr
+
+    def __call__(self, destreg):
+        return self.instr + self.callable(destreg)
+
+class DeferedRValue(RValue):
+    def __init__(self, future):
+        self.future = future
+
+    def storeTo(self, dest_regnum):
+        return self.future(dest_regnum)
 
 class Literal(RValue):
     def __init__(self, val):

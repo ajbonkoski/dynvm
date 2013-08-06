@@ -3,7 +3,7 @@ n = 20;
 
 i = 0;
 a = 1; b = 0;
-while i<n do
+while n-i do
    t = b
    b = a+b
    a = t

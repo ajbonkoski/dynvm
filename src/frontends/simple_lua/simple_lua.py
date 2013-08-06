@@ -39,8 +39,8 @@ def allocLabel(prefix):
 binOpNameMap = {
     '+':  ('__op_add', 'ADD'),
     '-':  ('__op_sub', 'SUB'),
-    '*':  ('__op_mul',  None),
-    '/':  ('__op_div',  None),
+    '*':  ('__op_mul', 'MUL'),
+    '/':  ('__op_div', 'DIV'),
     '<=': ('__op_leq',  None),
     '<':  ('__op_lt',   None),
     '>=': ('__op_geq',  None),
@@ -48,6 +48,25 @@ binOpNameMap = {
     '==': ('__op_eq',   None),
     '!=': ('__op_neq',  None),
 }
+
+class LiteralLoadBlock:
+    def __init__(self):
+        self.instr = ''
+        self.literal_map = {}
+
+    def add_literal(self, literal):
+        """Accept a literal, and return a register no. the caller
+        can access it with"""
+        if literal in self.literal_map:
+            return self.literal_map[literal]
+        else:
+            reg = allocTempReg()
+            self.instr += genInstr("LITERAL", reg, literal)
+            self.literal_map[literal] = reg
+            return reg
+
+llBlock = LiteralLoadBlock()
+
 
 ######################### INSTRUCTIONS ##############################
 C1_SP  = ' '*20
@@ -108,6 +127,8 @@ instructions = {
     'JMPCOND':      (genInstr_iJc,  LOAD_NO),  ## aggregate type
     'ADD':          (genInstr_iABC, LOAD_YES),
     'SUB':          (genInstr_iABC, LOAD_YES),
+    'DIV':          (genInstr_iABC, LOAD_YES),
+    'MUL':          (genInstr_iABC, LOAD_YES),
 }
 
 class UnknownInstruction(Exception): pass
@@ -207,7 +228,7 @@ def genWhileStmt(cond, body):
     return [CodeSequence(instr, None)]
 
 def genFinal(code_seq):
-    return code_seq.instr + genInstr("RET", lastAssignedReg)
+    return llBlock.instr + code_seq.instr + genInstr("RET", lastAssignedReg)
 
 
 
@@ -223,6 +244,7 @@ class CodeSequence:
     @staticmethod
     def join(arg):
         return [CodeSequence(''.join(a.instr for a in arg), None)]
+
 
 def stringify(s): return "\"{}\"".format(s)
 
@@ -285,11 +307,17 @@ class FutureRValue(RValue):
 class Literal(RValue):
     def __init__(self, val):
         RValue.__init__(self)
+        self.reg = llBlock.add_literal(val)
         self.val = val
 
     def storeTo(self, dest_regnum):
-        return genInstr("LITERAL", dest_regnum, self.val)
+        return genInstr("MOVE", dest_regnum, self.reg)
 
+    def hasRegister(self):
+        return True
+
+    def getRegister(self):
+        return self.reg
 
 class NewObjLiteral(RValue):
     def __init__(self): RValue.__init__(self)

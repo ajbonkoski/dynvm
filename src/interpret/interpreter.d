@@ -12,9 +12,19 @@ enum LOUD = false;
 
 private void runLoop(State state, CodeObject co, bool silent)
 {
+  Instruction inst;
+
+  void binOp(string name)() {
+    auto obj_b = state.getRegister(inst.iABC.b);
+    auto obj_c = state.getRegister(inst.iABC.c);
+    auto obj_a = obj_b.get(name).call(obj_b, obj_c);
+    state.setRegister(inst.iABC.a, obj_a);
+  }
+
+
  EXECLOOP:
   while(true) {
-    auto inst = state.fetchInstr();
+    inst = state.fetchInstr();
     if(LOUD) writeln(inst.toString());
 
     final switch(inst.opcode)
@@ -84,19 +94,12 @@ private void runLoop(State state, CodeObject co, bool silent)
         state.pc += offset;
         break;
 
-      case IOpcode.ADD:
-        auto obj_b = state.getRegister(inst.iABC.b);
-        auto obj_c = state.getRegister(inst.iABC.c);
-        auto obj_a = obj_b.get("__op_add").call(obj_b, obj_c);
-        state.setRegister(inst.iABC.a, obj_a);
-        break;
+      // binary operations
+      case IOpcode.ADD:   binOp!"__op_add";   break;
+      case IOpcode.SUB:   binOp!"__op_sub";   break;
+      case IOpcode.MUL:   binOp!"__op_mul";   break;
+      case IOpcode.DIV:   binOp!"__op_div";   break;
 
-      case IOpcode.SUB:
-        auto obj_b = state.getRegister(inst.iABC.b);
-        auto obj_c = state.getRegister(inst.iABC.c);
-        auto obj_a = obj_b.get("__op_sub").call(obj_b, obj_c);
-        state.setRegister(inst.iABC.a, obj_a);
-        break;
     }
   }
 }

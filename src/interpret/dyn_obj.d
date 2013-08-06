@@ -21,16 +21,16 @@ class DynObject
 {
   uint id;
   static uint next_id = 0;
-  DynvmHashTable!DynObject table;
-  //DynObject[string] table;
   int refcnt = 0;
+
+  DynvmHashTable!DynObject my_table = null;
+  DynvmHashTable!DynObject table = null;
 
   DynObject parent;
   static string parent_name = "__parent__";
 
   this(){
     id = next_id++;
-    table = new DynvmHashTable!DynObject();
   }
 
   final void incref(){ refcnt++; }
@@ -69,6 +69,13 @@ class DynObject
     if(name == parent_name)
       return parent;
 
+    if(table is null) {
+      if(my_table is null)
+        table = parent.table;
+      else
+        table = my_table;
+    }
+
     // precompute the hash (to save time)
     ulong hash = table.computeHash(name);
 
@@ -101,6 +108,16 @@ class DynObject
     assert(false, format("get operation failed in DynObject for '%s'", name));
   }
 
+  final void ensure_init()
+  {
+    if(table !is null)
+      return;
+
+    // we only init table on demand!
+    my_table = new DynvmHashTable!DynObject();
+    table = my_table;
+  }
+
   final void set(string name, DynObject obj)
   {
     if(name == parent_name) {
@@ -108,6 +125,7 @@ class DynObject
       return;
     }
 
+    ensure_init();
     table.set(name, obj);
   }
 
@@ -133,7 +151,7 @@ class DynStringClass : DynObject
   static this() { singleton = new DynStringClass(); }
 
   this() {
-    table.set("__op_add", new DynNativeBinFunc(&NativeBinStrConcat));
+    set("__op_add", new DynNativeBinFunc(&NativeBinStrConcat));
   }
 }
 
@@ -142,28 +160,17 @@ class DynIntClass : DynObject
   static DynIntClass singleton;
   static this() { singleton = new DynIntClass(); }
 
-// mixin(genNativeBinInt("Add", "+"));
-// mixin(genNativeBinInt("Sub", "-"));
-// mixin(genNativeBinInt("Mul", "*"));
-// mixin(genNativeBinInt("Div", "/"));
-// mixin(genNativeBinInt("Leq", "<="));
-// mixin(genNativeBinInt("Lt",  "<"));
-// mixin(genNativeBinInt("Geq", ">="));
-// mixin(genNativeBinInt("Gt",  ">"));
-// mixin(genNativeBinInt("Eq",  "=="));
-// mixin(genNativeBinInt("Neq", "!="));
-
   this() {
-    table.set("__op_add", new DynNativeBinInt!("+"));
-    table.set("__op_sub", new DynNativeBinInt!("-"));
-    table.set("__op_mul", new DynNativeBinInt!("*"));
-    table.set("__op_div", new DynNativeBinInt!("/"));
-    table.set("__op_leq", new DynNativeBinInt!("<="));
-    table.set("__op_lt" , new DynNativeBinInt!("<"));
-    table.set("__op_geq", new DynNativeBinInt!(">="));
-    table.set("__op_gt" , new DynNativeBinInt!(">"));
-    table.set("__op_eq" , new DynNativeBinInt!("=="));
-    table.set("__op_neq", new DynNativeBinInt!("!="));
+    set("__op_add", new DynNativeBinInt!("+"));
+    set("__op_sub", new DynNativeBinInt!("-"));
+    set("__op_mul", new DynNativeBinInt!("*"));
+    set("__op_div", new DynNativeBinInt!("/"));
+    set("__op_leq", new DynNativeBinInt!("<="));
+    set("__op_lt" , new DynNativeBinInt!("<"));
+    set("__op_geq", new DynNativeBinInt!(">="));
+    set("__op_gt" , new DynNativeBinInt!(">"));
+    set("__op_eq" , new DynNativeBinInt!("=="));
+    set("__op_neq", new DynNativeBinInt!("!="));
   }
 
   auto pool = new Stack!DynInt;

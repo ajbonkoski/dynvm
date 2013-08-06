@@ -4,11 +4,10 @@ n = 20;
 i = 0;
 a = 1; b = 0;
 while n-i do
+   i=i+1;
    t = b
    b = a+b
    a = t
-   i=i+1;
 end
 
-b*1
-
+b+0

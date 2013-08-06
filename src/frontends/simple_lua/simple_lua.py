@@ -147,18 +147,16 @@ def genBinCall(val_a, ops_list):
         ## this op has a dedicated instr?
         if op_instr != None:
             co1 = val_a.ensureGen()
-            instr += co1[0].instr
             co2 = val_b.ensureGen()
-            instr += co2[0].instr
 
-            def createFutureCallback(op_instr, A, B):
-                def f(destreg):
-                    return genInstr(op_instr, destreg, A, B)
+            def createFutureCallback(OP, B, C):
+                def f(A): return genInstr(OP, A, B, C)
                 return f
 
-            val_a = DeferedRValue(Future(
-                       createFutureCallback(op_instr, co1[0].outreg, co2[0].outreg),
-                       instr))
+            val_a = FutureRValue(
+                createFutureCallback(op_instr, co1[0].outreg, co2[0].outreg),
+                co1[0].instr + co2[0].instr)
+
 
         ## no dedicated instr... slow way...
         else:
@@ -274,20 +272,14 @@ class RValue(Value):
     def getRegister(self): assert(False)
     def genAssign(self, source): assert(False)
 
-class Future:
+class FutureRValue(RValue):
     def __init__(self, callable, instr):
+        RValue.__init__(self)
         self.callable = callable
         self.instr = instr
 
-    def __call__(self, destreg):
+    def storeTo(self, destreg):
         return self.instr + self.callable(destreg)
-
-class DeferedRValue(RValue):
-    def __init__(self, future):
-        self.future = future
-
-    def storeTo(self, dest_regnum):
-        return self.future(dest_regnum)
 
 class Literal(RValue):
     def __init__(self, val):

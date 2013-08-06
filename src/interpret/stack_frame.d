@@ -8,7 +8,7 @@ import dasm.literal;
 import dasm.instructions;
 import interpret.dyn_obj;
 
-class StackFrame
+final class StackFrame
 {
   CodeObject code;
   DynObject[] locals;

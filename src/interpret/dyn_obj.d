@@ -75,7 +75,25 @@ class DynObject
     // search the inheritance chain
     DynObject obj = this;
     while(obj) {
-      DynObject* val = obj.table.get(name, hash);
+
+      DynObject* val = null;
+
+      ////////////////////////////////////////////////////
+      // table.get: manually inlined because DMD won't
+      auto data = obj.table.table[hash];
+      if(data.length == 1)
+        val = &data[0].value;
+      else {
+        foreach(pair; data) {
+          if(pair.key == name) {
+            val = &pair.value;
+            break;
+          }
+        }
+      }
+      //////////////////////////////////////////////
+
+
       if(val) return *val;
       else    obj = obj.parent;
     }

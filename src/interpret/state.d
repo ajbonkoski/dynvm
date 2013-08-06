@@ -10,7 +10,7 @@ import dasm.instructions;
 import interpret.dyn_obj;
 import interpret.stack_frame;
 
-class State
+final class State
 {
   DynObject[string] globals;
   auto stack = new Stack!(StackFrame)();  // contains all non active frames

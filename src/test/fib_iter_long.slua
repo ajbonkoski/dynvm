@@ -10,5 +10,4 @@ while n-i do
    a = t
 end
 
-b+0
-
+b

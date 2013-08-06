@@ -58,12 +58,27 @@ class LiteralLoadBlock:
         """Accept a literal, and return a register no. the caller
         can access it with"""
         if literal in self.literal_map:
-            return self.literal_map[literal]
+            regnum, refcnt = self.literal_map[literal]
+            self.literal_map[literal] = regnum, refcnt+1
+            return regnum
         else:
             reg = allocTempReg()
-            self.instr += genInstr("LITERAL", reg, literal)
-            self.literal_map[literal] = reg
+            self.literal_map[literal] = reg, 0
             return reg
+
+    def remove_literal(self, literal):
+        regnum, refcnt = self.literal_map[literal]
+        if refcnt == 0:
+            del self.literal_map[literal]
+            freeTempReg(regnum)
+        else:
+            self.literal_map[literal] = regnum, refcnt-1
+
+    def get_instr(self):
+        instr = ''
+        for literal, (regnum, refcnt) in self.literal_map.items():
+            instr += genInstr("LITERAL", regnum, literal)
+        return instr
 
 llBlock = LiteralLoadBlock()
 
@@ -228,7 +243,7 @@ def genWhileStmt(cond, body):
     return [CodeSequence(instr, None)]
 
 def genFinal(code_seq):
-    return llBlock.instr + code_seq.instr + genInstr("RET", lastAssignedReg)
+    return llBlock.get_instr() + code_seq.instr + genInstr("RET", code_seq.outreg)
 
 
 
@@ -243,7 +258,8 @@ class CodeSequence:
 
     @staticmethod
     def join(arg):
-        return [CodeSequence(''.join(a.instr for a in arg), None)]
+        newoutreg = arg[-1].outreg
+        return [CodeSequence(''.join(a.instr for a in arg), newoutreg)]
 
 
 def stringify(s): return "\"{}\"".format(s)
@@ -307,11 +323,12 @@ class FutureRValue(RValue):
 class Literal(RValue):
     def __init__(self, val):
         RValue.__init__(self)
-        self.reg = llBlock.add_literal(val)
         self.val = val
+        self.reg = llBlock.add_literal(self.val)
 
     def storeTo(self, dest_regnum):
-        return genInstr("MOVE", dest_regnum, self.reg)
+        llBlock.remove_literal(self.val);
+        return genInstr("LITERAL", dest_regnum, self.val)
 
     def hasRegister(self):
         return True

@@ -1,2 +1,0 @@
-#!/bin/bash
-make release && cat $1 | time dynvm - $2

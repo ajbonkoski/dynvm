@@ -1,0 +1,34 @@
+#!/bin/bash
+
+M=$2
+D=$3
+if [ "$2" == "-s" ]; then
+    M=$3
+    D=$2
+fi
+
+
+if [ "$M" == "" ]; then
+    MODE=release
+    DYNVM=dynvm
+elif [ "$M" == "d" ]; then
+    MODE=debug
+    DYNVM=dynvm-debug
+elif [ "$M" == "r" ]; then
+    MODE=release
+    DYNVM=dynvm
+else
+    echo "Error: invalid argument"
+    exit 1
+fi
+
+DYNVM_PATH=./bin/$DYNVM
+if [ ! -x $DYNVM_PATH ]; then
+    echo "Building '$DYNVM'..."
+    make $MODE >/dev/null || {
+        echo "Build failed! Exiting.."
+        exit 1
+    }
+fi
+
+cat $1 | time $DYNVM_PATH - $D

@@ -1,5 +1,3 @@
-SUBDIRS = frontends
-
 DC = dmd
 #DC = ldc2
 #DC = gdc
@@ -9,10 +7,10 @@ RELEASE_FLAGS = -O -release -inline -noboundscheck
 #RELEASE_FLAGS = -O3 -release -m64
 PROFILE_FLAGS = -O -profile -release -inline -noboundscheck
 
-DYNVM_BIN = bin/dynvm
-DYNVM_DEBUG_BIN = bin/dynvm-debug
-DYNVM_PROFILE_BIN = bin/dynvm-profile
-DYNVM_OBJ = bin/dynvm.o
+DYNVM_BIN = ../bin/dynvm
+DYNVM_DEBUG_BIN = ../bin/dynvm-debug
+DYNVM_PROFILE_BIN = ../bin/dynvm-profile
+DYNVM_OBJ = ../bin/dynvm.o ../bin/dynvm-debug.o ../bin/dynvm-profile.o
 DYNVM_SRC =              \
 common/common.d          \
 datastruct/stack.d       \
@@ -27,33 +25,20 @@ vm/stack_frame.d         \
 vm/state.d               \
 vm/interpreter.d         \
 
-TESTER_FLAGS =
-TESTER_BIN = bin/tester
-TESTER_OBJ = bin/tester.o
-TESTER_SRC =             \
-tester_src/main.d        \
 
-DEBUG = $(DYNVM_DEBUG_BIN) $(TESTER_BIN)
+DEBUG = $(DYNVM_DEBUG_BIN)
 debug:  $(DEBUG)
-	@for dir in $(SUBDIRS) ; do \
-	echo $$dir ; $(MAKE) $(SILENT) -C $$dir all || exit 2; done
 	rm -f $(DYNVM_BIN) $(DYNVM_PROFILE_BIN)
 
-PROFILE = $(DYNVM_PROFILE_BIN) $(TESTER_BIN)
+PROFILE = $(DYNVM_PROFILE_BIN)
 profile:  $(PROFILE)
-	@for dir in $(SUBDIRS) ; do \
-	echo $$dir ; $(MAKE) $(SILENT) -C $$dir all || exit 2; done
 	rm -f $(DYNVM_BIN) $(DYNVM_DEBUG_BIN)
 
-RELEASE = $(DYNVM_BIN) $(TESTER_BIN)
+RELEASE = $(DYNVM_BIN)
 release: $(RELEASE)
-	@for dir in $(SUBDIRS) ; do \
-	echo $$dir ; $(MAKE) $(SILENT) -C $$dir all || exit 2; done
 	rm -f $(DYNVM_DEBUG_BIN) $(DYNVM_PROFILE_BIN)
 
-all: $(DYNVM_DEBUG_BIN) $(DYNVM_PROFILE_BIN) $(DYNVM_BIN) $(TESTER_BIN)
-	@for dir in $(SUBDIRS) ; do \
-	echo $$dir ; $(MAKE) $(SILENT) -C $$dir all || exit 2; done
+all: $(DYNVM_DEBUG_BIN) $(DYNVM_PROFILE_BIN) $(DYNVM_BIN)
 
 $(DYNVM_BIN): $(DYNVM_SRC)
 	$(DC) $(RELEASE_FLAGS) -of$@ $^
@@ -67,11 +52,5 @@ $(DYNVM_PROFILE_BIN): $(DYNVM_SRC)
 	$(DC) $(PROFILE_FLAGS) -of$@ $^
 	rm -f $(DYNVM_OBJ)
 
-$(TESTER_BIN): $(TESTER_SRC)
-	$(DC) $(TESTER_FLAGS) -of$@ $^
-	rm -f $(TESTER_OBJ)
-
 clean:
-	rm -f $(RELEASE) $(DEBUG) $(PROFILE) $(BIN_TEST) *.o
-	for dir in $(SUBDIRS); do \
-	echo $$dir ; $(MAKE) -C $$dir clean || exit 2; done
+	rm -f $(RELEASE) $(DEBUG) $(PROFILE) $(DYNVM_OBJ) *.o

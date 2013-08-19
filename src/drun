@@ -1,2 +1,0 @@
-#!/bin/bash
-make && cat $1 | time dynvm-debug - $2

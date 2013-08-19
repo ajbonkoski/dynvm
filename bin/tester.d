@@ -1,4 +1,4 @@
-#!/usr/local/bin/rdmd
+#!/usr/local/bin/rdmd --preserve-path
 import std.stdio;
 import std.path;
 import std.file;
@@ -9,7 +9,10 @@ import std.conv;
 import std.getopt;
 import std.datetime;
 
-string TEST_DIR = "test";
+bool DEBUG = false;
+
+string ROOT_DIR = "";
+string TEST_DIR = "testsuite";
 auto DYNVM_BIN_OPT = ["dynvm", "dynvm-debug", "dynvm-profile"];
 string DYNVM; // this will be init to one of the binaries above
 auto BLACKLIST = [regex("#.*#"), regex(".*~")];
@@ -27,7 +30,7 @@ void select_binaries()
   // find DYNVM
   foreach(dynvm; DYNVM_BIN_OPT) {
     try {
-      if(isFile("bin/"~dynvm)) {
+      if(isFile(ROOT_DIR~"/bin/"~dynvm)) {
         DYNVM = dynvm;
         return;
       }
@@ -68,7 +71,7 @@ abstract class Test
   bool run();
 }
 
-class DynasmTest : Test
+class HlasmTest : Test
 {
   immutable static string ext = ".da";
   this(string tf){ super(tf); }
@@ -76,8 +79,10 @@ class DynasmTest : Test
 
   override bool run()
   {
-    string cmd = format("%s -s %s/%s | diff %s/%s -",
-                        DYNVM, TEST_DIR, testfile, TEST_DIR, ansfile);
+    string cmd = format("%s/bin/%s -s %s/%s/%s | diff %s/%s/%s -",
+                        ROOT_DIR, DYNVM,
+                        ROOT_DIR, TEST_DIR, testfile,
+                        ROOT_DIR, TEST_DIR, ansfile);
     auto res = executeShell(cmd);
     success = (res.status == 0);
     output = res.output;
@@ -95,12 +100,14 @@ class SluaTest : Test
   string CMD;
   override bool build()
   {
-    string cmd = format("cat %s/%s | slua -", TEST_DIR, testfile);
+    string cmd = format("cat %s/%s/%s | %s/bin/slua -", ROOT_DIR, TEST_DIR, testfile, ROOT_DIR);
+    if(DEBUG) cmd.writeln;
     auto res = executeShell(cmd);
     if(res.status != 0 || res.output == "")
       return false;
-    CMD = format("echo '%s' | %s -s - | diff %s/%s -",
-                 res.output, DYNVM, TEST_DIR, ansfile);
+    CMD = format("echo '%s' | %s/bin/%s -s - | diff %s/%s/%s -",
+                 res.output, ROOT_DIR, DYNVM, ROOT_DIR, TEST_DIR, ansfile);
+    if(DEBUG) CMD.writeln;
 
     return true;
   }
@@ -122,7 +129,7 @@ Test createTest(string name)
   auto s(string t){ return "\""~t~"\""; }
 
   switch(name.extension) {
-    case mixin(s(DynasmTest.ext)): return new DynasmTest(name);
+    case mixin(s(HlasmTest.ext)):  return new HlasmTest(name);
     case mixin(s(SluaTest.ext)):   return new SluaTest(name);
     default:
       throw new TesterError("Failed to find test type for "~name);
@@ -135,7 +142,7 @@ Test[string] test_map;
 void build_test_map()
 {
 
-  auto dir = buildNormalizedPath(getcwd(), TEST_DIR);
+  auto dir = buildNormalizedPath(ROOT_DIR, TEST_DIR);
   foreach(dirent; dirEntries(dir, SpanMode.shallow)) {
     auto fname = dirent.name.baseName;
 
@@ -255,6 +262,7 @@ int main(string[] args)
   if(verbose) SHOW_OUTPUT_ON_FAILURE = true;
 
 
+  ROOT_DIR = args[0].dirName.absolutePath.buildNormalizedPath("..");
   try { return run(); }
   catch(TesterError ex) { stderr.writeln("ERROR: ", ex.msg); }
 

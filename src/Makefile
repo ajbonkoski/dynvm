@@ -22,10 +22,10 @@ hlasm/instructions.d     \
 hlasm/literal.d          \
 hlasm/code_obj.d         \
 hlasm/assembler.d        \
-interpret/dyn_obj.d      \
-interpret/stack_frame.d  \
-interpret/state.d        \
-interpret/interpreter.d  \
+vm/dyn_obj.d             \
+vm/stack_frame.d         \
+vm/state.d               \
+vm/interpreter.d         \
 
 TESTER_FLAGS =
 TESTER_BIN = bin/tester

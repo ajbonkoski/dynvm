@@ -1,12 +1,12 @@
-module interpret.interpreter;
+module vm.interpreter;
 
 import std.stdio;
 
 import common.common;
 import hlasm.code_obj;
 import hlasm.instructions;
-import interpret.dyn_obj;
-import interpret.state;
+import vm.dyn_obj;
+import vm.state;
 
 enum LOUD = false;
 

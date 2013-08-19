@@ -5,7 +5,7 @@ import std.getopt;
 
 import hlasm.code_obj;
 import hlasm.assembler;
-import interpret.interpreter;
+import vm.interpreter;
 
 int main(string args[])
 {

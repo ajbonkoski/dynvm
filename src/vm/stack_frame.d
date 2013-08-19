@@ -1,4 +1,4 @@
-module interpret.stack_frame;
+module vm.stack_frame;
 
 import std.format;
 
@@ -6,7 +6,7 @@ import common.common;
 import hlasm.code_obj;
 import hlasm.literal;
 import hlasm.instructions;
-import interpret.dyn_obj;
+import vm.dyn_obj;
 
 final class StackFrame
 {

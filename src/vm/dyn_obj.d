@@ -1,4 +1,4 @@
-module interpret.dyn_obj;
+module vm.dyn_obj;
 
 import std.format;
 

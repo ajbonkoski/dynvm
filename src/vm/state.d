@@ -1,4 +1,4 @@
-module interpret.state;
+module vm.state;
 
 import std.format;
 
@@ -7,8 +7,8 @@ import datastruct.stack;
 import hlasm.code_obj;
 import hlasm.literal;
 import hlasm.instructions;
-import interpret.dyn_obj;
-import interpret.stack_frame;
+import vm.dyn_obj;
+import vm.stack_frame;
 
 final class State
 {

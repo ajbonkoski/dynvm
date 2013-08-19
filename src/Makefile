@@ -2,10 +2,11 @@ DC = dmd
 #DC = ldc2
 #DC = gdc
 
-DEBUG_FLAGS = -O -unittest -debug -gc
-RELEASE_FLAGS = -O -release -inline -noboundscheck
+INCLUDE_PATH = ../ddynasm/import
+DEBUG_FLAGS = -O -unittest -debug -gc #-I$(INCLUDE_PATH)
+RELEASE_FLAGS = -O -release -inline -noboundscheck #-I$(INCLUDE_PATH)
 #RELEASE_FLAGS = -O3 -release -m64
-PROFILE_FLAGS = -O -profile -release -inline -noboundscheck
+PROFILE_FLAGS = -O -profile -release -inline -noboundscheck #-I$(INCLUDE_PATH)
 
 DYNVM_BIN = ../bin/dynvm
 DYNVM_DEBUG_BIN = ../bin/dynvm-debug
@@ -25,6 +26,10 @@ vm/stack_frame.d         \
 vm/state.d               \
 vm/interpreter.d         \
 
+DYNVM_DASD_SRC =           \
+	vm/jit/dispatch.d  \
+
+DDYNASM_LINK = ../ddynasm/import/ddynasm/dasm_x86.d ../ddynasm/lib/ddynasm.a
 
 DEBUG = $(DYNVM_DEBUG_BIN)
 debug:  $(DEBUG)
@@ -40,17 +45,20 @@ release: $(RELEASE)
 
 all: $(DYNVM_DEBUG_BIN) $(DYNVM_PROFILE_BIN) $(DYNVM_BIN)
 
-$(DYNVM_BIN): $(DYNVM_SRC)
+$(DYNVM_BIN): $(DYNVM_SRC) #$(DYNVM_DASD_SRC) $(DDYNASM_LINK)
 	$(DC) $(RELEASE_FLAGS) -of$@ $^
 	rm -f $(DYNVM_OBJ)
 
-$(DYNVM_DEBUG_BIN): $(DYNVM_SRC)
+$(DYNVM_DEBUG_BIN): $(DYNVM_SRC) #$(DYNVM_DASD_SRC) $(DDYNASM_LINK)
 	$(DC) $(DEBUG_FLAGS) -of$@ $^
 	rm -f $(DYNVM_OBJ)
 
-$(DYNVM_PROFILE_BIN): $(DYNVM_SRC)
+$(DYNVM_PROFILE_BIN): $(DYNVM_SRC) #$(DYNVM_DASD_SRC) $(DDYNASM_LINK)
 	$(DC) $(PROFILE_FLAGS) -of$@ $^
 	rm -f $(DYNVM_OBJ)
+
+%.d: %.dasd
+	../ddynasm/bin/ddynasm $< > $@
 
 clean:
 	rm -f $(RELEASE) $(DEBUG) $(PROFILE) $(DYNVM_OBJ) *.o

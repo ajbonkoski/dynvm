@@ -10,7 +10,7 @@ release:
 	echo $$dir ; $(MAKE) $(SILENT) -C $$dir all || exit 2; done
 	echo src/ ; $(MAKE) $(SILENT) -C src/ release || exit 2
 
-profile:
+prof:
 	@for dir in $(SUBDIRS) ; do \
 	echo $$dir ; $(MAKE) $(SILENT) -C $$dir all || exit 2; done
 	echo src/ ; $(MAKE) $(SILENT) -C src/ profile || exit 2

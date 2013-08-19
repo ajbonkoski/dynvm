@@ -1,0 +1,55 @@
+module vm.jit.disptach;
+
+import std.conv;
+import std.stdio;
+
+import hlasm.code_obj;
+import hlasm.instructions;
+import vm.dyn_obj;
+import vm.state;
+
+// DynASM directives.
+|.arch x64
+|.actionlist actions
+
+void unimpl(IOpcode op)
+{
+  assert(false, "Error: opcode \""~op.to!string~"\" is unimplemented");
+}
+
+void runCode(CodeObject co, bool silent)
+{
+  auto state = new State(co);
+  mixin(DasmDecl("d"));
+  d.init(1);
+  d.setup(actions);
+
+  Instruction inst;
+  while(true) {
+    inst = state.fetchInstr;
+    auto op = inst.opcode;
+    final switch(op)
+    {
+      case IOpcode.LITERAL:     op.unimpl; break;
+      case IOpcode.LOADGLOBAL:  op.unimpl; break;
+      case IOpcode.STOREGLOBAL: op.unimpl; break;
+      case IOpcode.MOVE:        op.unimpl; break;
+      case IOpcode.RET:         op.unimpl; break;
+      case IOpcode.NEWOBJECT:   op.unimpl; break;
+      case IOpcode.SETSELF:     op.unimpl; break;
+      case IOpcode.GET:         op.unimpl; break;
+      case IOpcode.SET:         op.unimpl; break;
+      case IOpcode.CALL:        op.unimpl; break;
+      case IOpcode.TEST:        op.unimpl; break;
+      case IOpcode.JMP:         op.unimpl; break;
+      case IOpcode.ADD:         op.unimpl; break;
+      case IOpcode.SUB:         op.unimpl; break;
+      case IOpcode.MUL:         op.unimpl; break;
+      case IOpcode.DIV:         op.unimpl; break;
+    }
+  }
+
+  auto func = d.link_and_encode;
+  writefln("%d", func());
+  d.free;
+}

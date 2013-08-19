@@ -1,2 +1,2 @@
 #!/bin/bash
-make profile && cat $1 | dynvm-profile - $2
+make prof && cat $1 | ./bin/dynvm-profile - $2

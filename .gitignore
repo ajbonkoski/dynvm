@@ -4,6 +4,10 @@
 \#*#
 .#*
 
+## Directories
+bin/
+stats/
+
 ## Profiler output
 trace.log
 trace.def

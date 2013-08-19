@@ -1,3 +1,4 @@
+#!/usr/local/bin/rdmd
 import std.stdio;
 import std.path;
 import std.file;

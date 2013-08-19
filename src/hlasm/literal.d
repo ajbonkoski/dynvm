@@ -1,4 +1,4 @@
-module dasm.literal;
+module hlasm.literal;
 import std.conv;
 
 enum LType { String, Int }

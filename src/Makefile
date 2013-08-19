@@ -13,15 +13,15 @@ DYNVM_BIN = bin/dynvm
 DYNVM_DEBUG_BIN = bin/dynvm-debug
 DYNVM_PROFILE_BIN = bin/dynvm-profile
 DYNVM_OBJ = bin/dynvm.o
-DYNVM_SRC =               \
+DYNVM_SRC =              \
 common/common.d          \
 datastruct/stack.d       \
 datastruct/hashtable.d   \
 main.d                   \
-dasm/instructions.d      \
-dasm/literal.d           \
-dasm/code_obj.d          \
-dasm/assembler.d         \
+hlasm/instructions.d     \
+hlasm/literal.d          \
+hlasm/code_obj.d         \
+hlasm/assembler.d        \
 interpret/dyn_obj.d      \
 interpret/stack_frame.d  \
 interpret/state.d        \

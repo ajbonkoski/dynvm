@@ -6,7 +6,7 @@ import std.string;
 import std.algorithm;
 import std.conv;
 import common.common;
-import dasm.literal;
+import hlasm.literal;
 import datastruct.stack;
 import datastruct.hashtable;
 

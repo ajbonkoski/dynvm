@@ -4,9 +4,9 @@ import std.format;
 
 import common.common;
 import datastruct.stack;
-import dasm.code_obj;
-import dasm.literal;
-import dasm.instructions;
+import hlasm.code_obj;
+import hlasm.literal;
+import hlasm.instructions;
 import interpret.dyn_obj;
 import interpret.stack_frame;
 

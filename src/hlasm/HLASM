@@ -1,5 +1,5 @@
 ----------------------------------------------------------------------
-DynAsm is a bytecode designed for dynamic languages.
+High-Level Asm (HLASM) is a bytecode designed for dynamic languages.
   * Inspired by the bytecode used in the lua5.0 implementation
 ----------------------------------------------------------------------
 

@@ -1,4 +1,4 @@
-module dasm.instructions;
+module hlasm.instructions;
 
 import std.exception;
 import std.bitmanip;

@@ -3,8 +3,8 @@ module interpret.interpreter;
 import std.stdio;
 
 import common.common;
-import dasm.code_obj;
-import dasm.instructions;
+import hlasm.code_obj;
+import hlasm.instructions;
 import interpret.dyn_obj;
 import interpret.state;
 

@@ -3,8 +3,8 @@ import std.stdio;
 import std.conv;
 import std.getopt;
 
-import dasm.code_obj;
-import dasm.assembler;
+import hlasm.code_obj;
+import hlasm.assembler;
 import interpret.interpreter;
 
 int main(string args[])

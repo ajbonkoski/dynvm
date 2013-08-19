@@ -1,4 +1,4 @@
-module dasm.assembler;
+module hlasm.assembler;
 
 import std.c.stdlib;
 import std.stdio;
@@ -7,9 +7,9 @@ import std.conv;
 import std.exception;
 import std.string;
 
-import dasm.instructions;
-import dasm.code_obj;
-import dasm.literal;
+import hlasm.instructions;
+import hlasm.code_obj;
+import hlasm.literal;
 
 // global line tracking
 int lineno = 0;

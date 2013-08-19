@@ -1,10 +1,10 @@
-module dasm.code_obj;
+module hlasm.code_obj;
 
 import std.conv;
 import std.stdio;
 
-import dasm.instructions;
-import dasm.literal;
+import hlasm.instructions;
+import hlasm.literal;
 
 enum max_stack = 256;
 enum init_size = 16;

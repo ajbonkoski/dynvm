@@ -1,0 +1,3 @@
+[submodule "ddynasm"]
+	path = ddynasm
+	url = git@github.com:ajbonkoski/ddynasm.git

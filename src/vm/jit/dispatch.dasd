@@ -1,4 +1,4 @@
-module vm.jit.disptach;
+module vm.jit.dispatch;
 
 import std.conv;
 import std.stdio;
@@ -7,6 +7,9 @@ import hlasm.code_obj;
 import hlasm.instructions;
 import vm.dyn_obj;
 import vm.state;
+import vm.stack_frame;
+
+import vm.jit.dynasm_util;
 
 // DynASM directives.
 |.arch x64
@@ -17,24 +20,67 @@ void unimpl(IOpcode op)
   assert(false, "Error: opcode \""~op.to!string~"\" is unimplemented");
 }
 
+struct TestStruct
+{
+  int a = 7;
+  int foo() { return 42*a; }
+}
+
+TestStruct ts;
+
+
 void runCode(CodeObject co, bool silent)
 {
-  auto state = new State(co);
+  auto state = State(co);
+  auto getRegister = &state.frame.getRegister;
+  auto setRegister = &state.frame.setRegister;
+  auto getLiteralObj = &state.frame.getLiteralObj;
+
   mixin(DasmDecl("d"));
   d.init(1);
   d.setup(actions);
 
+  // save the State* to the top of stack
+  | push rdi
+  | mov  r15, rdi
+
   Instruction inst;
-  while(true) {
+  bool done = false;
+  while(!done) {
     inst = state.fetchInstr;
     auto op = inst.opcode;
     final switch(op)
     {
-      case IOpcode.LITERAL:     op.unimpl; break;
+      case IOpcode.LITERAL:
+        auto iABx_a = inst.iABx.a;
+        auto iABx_bx = inst.iABx.bx;
+
+        // auto obj = state.getLiteralObj(inst.iABx.bx);
+        | mov  rdi, [r15+State.frame.offsetof]
+        | mov  rsi, iABx_bx
+        | mov  rax, getLiteralObj.funcptr
+        | call rax
+
+        // state.setRegister(inst.iABx.a, obj);
+        | mov  rdi, [r15+State.frame.offsetof]
+        | mov  rsi, rax
+        | mov  rdx, iABx_a
+        | mov  rax, setRegister.funcptr
+        | call rax
+        break;
+
       case IOpcode.LOADGLOBAL:  op.unimpl; break;
       case IOpcode.STOREGLOBAL: op.unimpl; break;
       case IOpcode.MOVE:        op.unimpl; break;
-      case IOpcode.RET:         op.unimpl; break;
+
+      case IOpcode.RET:
+        | mov  rdi, [r15+State.frame.offsetof]
+        | mov  rsi, inst.iAB.a
+        | mov  rax, getRegister.funcptr
+        | call rax
+        | mov  [r15+State._ret.offsetof], rax
+        done = true; break;
+
       case IOpcode.NEWOBJECT:   op.unimpl; break;
       case IOpcode.SETSELF:     op.unimpl; break;
       case IOpcode.GET:         op.unimpl; break;
@@ -49,7 +95,15 @@ void runCode(CodeObject co, bool silent)
     }
   }
 
+  | pop rdi
+  | ret
+
   auto func = d.link_and_encode;
-  writefln("%d", func());
+  d.printMemRaw;
+  stdout.flush;
+
+  func(&state);
+  writeln;
+  state.ret.writeln;
   d.free;
 }

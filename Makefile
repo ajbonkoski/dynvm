@@ -21,6 +21,9 @@ all:
 	echo src/ ; $(MAKE) $(SILENT) -C src/ all || exit 2
 
 clean:
+	echo src/ ; $(MAKE) $(SILENT) -C src/ clean || exit 2
+
+nuke:
 	for dir in $(SUBDIRS); do \
 	echo $$dir ; $(MAKE) -C $$dir clean || exit 2; done
 	echo src/ ; $(MAKE) $(SILENT) -C src/ clean || exit 2

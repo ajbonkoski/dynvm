@@ -3,9 +3,9 @@ DC = dmd
 #DC = gdc
 
 INCLUDE_PATH = ../ddynasm/import
-DEBUG_FLAGS = -O -unittest -debug -gc -I$(INCLUDE_PATH)
-RELEASE_FLAGS = -O -release -inline -noboundscheck -I$(INCLUDE_PATH)
-PROFILE_FLAGS = -O -profile -release -inline -noboundscheck -I$(INCLUDE_PATH)
+DEBUG_FLAGS = -O -m64 -unittest -debug -gc -I$(INCLUDE_PATH)
+RELEASE_FLAGS = -O -m64 -release -inline -noboundscheck -I$(INCLUDE_PATH)
+PROFILE_FLAGS = -O -m64 -profile -release -inline -noboundscheck -I$(INCLUDE_PATH)
 
 DYNVM_BIN = ../bin/dynvm
 DYNVM_DEBUG_BIN = ../bin/dynvm-debug
@@ -25,8 +25,9 @@ vm/stack_frame.d         \
 vm/state.d               \
 vm/interpreter.d         \
 
-DYNVM_DASD_SRC =           \
-	vm/jit/dispatch.d  \
+DYNVM_DASD_SRC =              \
+	vm/jit/dynasm_util.d  \
+	vm/jit/dispatch.d     \
 
 DDYNASM_LINK = ../ddynasm/import/ddynasm/dasm_x86.d ../ddynasm/lib/ddynasm.a
 

@@ -1,0 +1,3 @@
+
+        LITERAL r0  #43
+        RET     r0

@@ -1,0 +1,36 @@
+module vm.jit.dynasm_util;
+import std.stdio;
+
+// DynASM directives.
+|.arch x64
+|.actionlist actions
+
+
+// should be used with UFCS, so it "looks" like a Dasm method
+// e.g. d.genCall(...)
+void *genCall(ref Dasm d, void *func, void *arg1)
+{
+  auto Dst = &d.state;
+  d.setup(actions);
+
+  | mov   rdi, arg1
+  | mov   rax, func
+  | call  rax
+
+  return null;
+}
+
+void printMem(ref Dasm d)
+{
+  foreach(i; 0..d.size) {
+    writef(" %x", d.mem[i]);
+    if(i > 0 && i%16 == 0) writef("\n");
+  }
+}
+
+void printMemRaw(ref Dasm d)
+{
+  foreach(i; 0..d.size) {
+    writef("%c", d.mem[i]);
+  }
+}

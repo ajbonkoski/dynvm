@@ -6,12 +6,15 @@ import std.getopt;
 import hlasm.code_obj;
 import hlasm.assembler;
 import vm.interpreter;
+import vm.jit.dispatch;
 
 int main(string args[])
 {
   bool silent = false, junk;
+  bool use_jit = false;
     getopt(args,
            "silent|s", &silent,
+           "use-jit|j", &use_jit,
 
            // allow the single dash to pass through
            config.passThrough, "|", &junk);
@@ -35,7 +38,11 @@ int main(string args[])
     }
 
     if(!silent) writeln("==== Starting execution ====");
-    interpretCode(co, silent);
+
+    if(use_jit)
+      runCode(co, silent);
+    else
+      interpretCode(co, silent);
 
 
     return 0;

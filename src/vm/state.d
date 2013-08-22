@@ -10,7 +10,7 @@ import hlasm.instructions;
 import vm.dyn_obj;
 import vm.stack_frame;
 
-final class State
+struct State
 {
   DynObject[string] globals;
   auto stack = new Stack!(StackFrame)();  // contains all non active frames
@@ -28,6 +28,7 @@ final class State
 
   this(CodeObject co)
   {
+
     this(new StackFrame(co));
   }
 
@@ -107,4 +108,15 @@ final class State
     return iw;
   }
 
+}
+
+// raw functions for the jit - arghh this sucks
+DynObject State_getRegister(State *state, uint regnum)
+{
+  return (*state).frame.getRegister(regnum);
+}
+
+void State_setRegister(State *state, uint regnum, DynObject obj)
+{
+  return (*state).frame.setRegister(regnum, obj);
 }

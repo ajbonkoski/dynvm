@@ -4,6 +4,7 @@ import std.conv;
 import std.stdio;
 
 import hlasm.code_obj;
+import hlasm.literal;
 import hlasm.instructions;
 import vm.dyn_obj;
 import vm.state;
@@ -14,70 +15,135 @@ import vm.jit.dynasm_util;
 // DynASM directives.
 |.arch x64
 |.actionlist actions
+|.section code, imports
+
+|.macro call_extern, target
+|  .imports
+  |  ->__imp__..target:
+  |  .dword  cast(uint)target
+  |  .dword (cast(ulong)target >> 32)
+|  .code
+|  call qword [->__imp__..target]
+|.endmacro
+
+
+|.macro call_extern2, target
+|  .code
+|  mov  rax, target
+|  call rax
+|.endmacro
+
+|.macro call_arg0, target
+|  .code
+|  mov  rax, target
+|  call rax
+|.endmacro
+
+|.macro call_arg1, target, arg1
+|  .code
+|  mov  rdi, arg1
+|  mov  rax, target
+|  call rax
+|.endmacro
+
+|.macro call_arg2, target, arg1, arg2
+|  .code
+|  mov  rsi, arg1
+|  mov  rdi, arg2
+|  mov  rax, target
+|  call rax
+|.endmacro
+
+|.macro call_arg3, target, arg1, arg2, arg3
+|  .code
+|  mov  rdx, arg1
+|  mov  rsi, arg2
+|  mov  rdi, arg3
+|  mov  rax, target
+|  call rax
+|.endmacro
 
 void unimpl(IOpcode op)
 {
   assert(false, "Error: opcode \""~op.to!string~"\" is unimplemented");
 }
 
-struct TestStruct
-{
-  int a = 7;
-  int foo() { return 42*a; }
-}
-
-TestStruct ts;
-
-
 void runCode(CodeObject co, bool silent)
 {
   auto state = State(co);
-  auto getRegister = &state.frame.getRegister;
-  auto setRegister = &state.frame.setRegister;
-  auto getLiteralObj = &state.frame.getLiteralObj;
+  auto getRegister = (&state.frame.getRegister).funcptr;
+  auto setRegister = (&state.frame.setRegister).funcptr;
+  auto getLiteralObj = (&state.frame.getLiteralObj).funcptr;
+  auto getLiteral = (&state.frame.getLiteral).funcptr;
+  auto literal_truthiness = &Literal.truthiness;
 
   mixin(DasmDecl("d"));
   d.init(1);
   d.setup(actions);
+  auto maxpc = (co.inst.length-1).to!int;
+  d.growpc(maxpc);
+  Instruction inst;
+
+  void genBinop(string name)()
+  {
+    auto getBinop = (&state._ret.__template_get!name).funcptr;
+
+    //auto obj_c = state.getRegister(inst.iABC.c);
+    | call_arg2 getRegister, inst.iABC.c, r14
+    | push rax
+
+    //auto obj_b = state.getRegister(inst.iABC.b);
+    | call_arg2 getRegister, inst.iABC.b, r14
+    | push rax
+
+    //auto obj_a = obj_b.get(name).call(obj_b, obj_c);
+    | call_arg1 getBinop, rax
+
+    | mov  rdi, rax
+    | pop  rdx
+    | pop  rsi
+    | call_arg0 cast(void*)&DynObject_call2
+
+    //state.setRegister(inst.iABC.a, obj_a);
+    | call_arg3 setRegister, inst.iABC.a, rax, r14
+
+  }
 
   // save the State* to the top of stack
   | push rdi
   | mov  r15, rdi
+  | mov  r14, [r15+State.frame.offsetof]
 
-  Instruction inst;
   bool done = false;
+  uint inst_num = 0;
   while(!done) {
+    // fetch the pc before it gets inc.
+    auto current_pc = state.pc;
     inst = state.fetchInstr;
     auto op = inst.opcode;
+    | =>(current_pc):
+
+    // these are aliased to work-around a naming conflict with dynasm
+    auto iABx_a = inst.iABx.a;
+    auto iABx_bx = inst.iABx.bx;
+
     final switch(op)
     {
       case IOpcode.LITERAL:
-        auto iABx_a = inst.iABx.a;
-        auto iABx_bx = inst.iABx.bx;
-
-        // auto obj = state.getLiteralObj(inst.iABx.bx);
-        | mov  rdi, [r15+State.frame.offsetof]
-        | mov  rsi, iABx_bx
-        | mov  rax, getLiteralObj.funcptr
-        | call rax
-
-        // state.setRegister(inst.iABx.a, obj);
-        | mov  rdi, [r15+State.frame.offsetof]
-        | mov  rsi, rax
-        | mov  rdx, iABx_a
-        | mov  rax, setRegister.funcptr
-        | call rax
+        | call_arg2 getLiteralObj, iABx_bx, r14
+        | call_arg3 setRegister, iABx_a, rax, r14
         break;
 
       case IOpcode.LOADGLOBAL:  op.unimpl; break;
       case IOpcode.STOREGLOBAL: op.unimpl; break;
-      case IOpcode.MOVE:        op.unimpl; break;
+
+      case IOpcode.MOVE:
+        | call_arg2 getRegister, inst.iAB.b, r14
+        | call_arg3 setRegister, inst.iAB.a, rax, r14
+        break;
 
       case IOpcode.RET:
-        | mov  rdi, [r15+State.frame.offsetof]
-        | mov  rsi, inst.iAB.a
-        | mov  rax, getRegister.funcptr
-        | call rax
+        | call_arg2 getRegister, inst.iAB.a, r14
         | mov  [r15+State._ret.offsetof], rax
         done = true; break;
 
@@ -86,12 +152,33 @@ void runCode(CodeObject co, bool silent)
       case IOpcode.GET:         op.unimpl; break;
       case IOpcode.SET:         op.unimpl; break;
       case IOpcode.CALL:        op.unimpl; break;
-      case IOpcode.TEST:        op.unimpl; break;
-      case IOpcode.JMP:         op.unimpl; break;
-      case IOpcode.ADD:         op.unimpl; break;
-      case IOpcode.SUB:         op.unimpl; break;
-      case IOpcode.MUL:         op.unimpl; break;
-      case IOpcode.DIV:         op.unimpl; break;
+      case IOpcode.TEST:
+
+        //bool t  = state.getRegister(inst.iABx.a).truthiness;
+        | call_arg2 getRegister, iABx_a, r14
+        | call_arg1 cast(void*)&DynObject_truthiness, rax
+        | mov  rbx, rax
+
+        //bool tl = state.getLiteral(inst.iABx.bx).truthiness;
+        | sub  rsp, Literal.sizeof
+        | call_arg3 getLiteral, iABx_bx, rsp, r14
+        | call_arg1 literal_truthiness, rax
+        | add  rsp, Literal.sizeof
+
+        //if(t != tl) state.pc += 1;
+        | cmp rax, rbx
+        | jne =>(state.pc+1)
+        break;
+
+      case IOpcode.JMP:
+        int offset = inst.isBx.sbx.sBx2int;
+        | jmp =>(state.pc + offset)
+        break;
+
+      case IOpcode.ADD:  genBinop!"__op_add"; break;
+      case IOpcode.SUB:  genBinop!"__op_sub"; break;
+      case IOpcode.MUL:  genBinop!"__op_mul"; break;
+      case IOpcode.DIV:  genBinop!"__op_div"; break;
     }
   }
 
@@ -99,11 +186,15 @@ void runCode(CodeObject co, bool silent)
   | ret
 
   auto func = d.link_and_encode;
-  d.printMemRaw;
-  stdout.flush;
+  //d.printMemRaw;
+  //stdout.flush;
 
   func(&state);
-  writeln;
-  state.ret.writeln;
+  //writeln("Jit Code is done!");
+
+  //writeln;
+  //state.ret.writeln;
   d.free;
+
+  state.ret.pretty.writeln;
 }

@@ -15,12 +15,10 @@ private void runLoop(ref State state, CodeObject co, bool silent)
   Instruction inst;
 
   void binOp(string name)() {
-    //auto obj_b = State_getRegister(&state, inst.iABC.b);
-    auto func =  &state.getRegister;
-    auto obj_b = func(inst.iABC.b);
-    auto obj_c = State_getRegister(&state, inst.iABC.c);
+    auto obj_b = state.getRegister(inst.iABC.b);
+    auto obj_c = state.getRegister(inst.iABC.c);
     auto obj_a = obj_b.get(name).call(obj_b, obj_c);
-    State_setRegister(&state, inst.iABC.a, obj_a);
+    state.setRegister(inst.iABC.a, obj_a);
   }
 
 

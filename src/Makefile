@@ -4,8 +4,8 @@ DC = dmd
 
 INCLUDE_PATH = ../ddynasm/import
 DEBUG_FLAGS = -O -m64 -unittest -debug -gc -I$(INCLUDE_PATH)
-RELEASE_FLAGS = -O -m64 -release -inline -noboundscheck -I$(INCLUDE_PATH)
-PROFILE_FLAGS = -O -m64 -profile -release -inline -noboundscheck -I$(INCLUDE_PATH)
+RELEASE_FLAGS = -O -gc -m64 -release -inline -noboundscheck -I$(INCLUDE_PATH)
+PROFILE_FLAGS = -O -gc -m64 -profile -release -inline -noboundscheck -I$(INCLUDE_PATH)
 
 DYNVM_BIN = ../bin/dynvm
 DYNVM_DEBUG_BIN = ../bin/dynvm-debug

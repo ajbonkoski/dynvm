@@ -74,13 +74,14 @@ abstract class Test
 class HlasmTest : Test
 {
   immutable static string ext = ".da";
-  this(string tf){ super(tf); }
+  bool use_jit = false;
+  this(string tf, bool use_jit=false){ super(tf); this.use_jit = use_jit; }
   override string getRequiredTestfileExt(){ return ext; }
 
   override bool run()
   {
-    string cmd = format("%s/bin/%s -s %s/%s/%s | diff %s/%s/%s -",
-                        ROOT_DIR, DYNVM,
+    string cmd = format("%s/bin/%s %s -s %s/%s/%s | diff %s/%s/%s -",
+                        ROOT_DIR, DYNVM, use_jit ? "-j" : "",
                         ROOT_DIR, TEST_DIR, testfile,
                         ROOT_DIR, TEST_DIR, ansfile);
     auto res = executeShell(cmd);
@@ -94,7 +95,8 @@ class HlasmTest : Test
 class SluaTest : Test
 {
   immutable static string ext = ".slua";
-  this(string tf){ super(tf); }
+  bool use_jit = false;
+  this(string tf, bool use_jit=false){ super(tf); this.use_jit = use_jit; }
   override string getRequiredTestfileExt(){ return ext; }
 
   string CMD;
@@ -105,10 +107,11 @@ class SluaTest : Test
     auto res = executeShell(cmd);
     if(res.status != 0 || res.output == "")
       return false;
-    CMD = format("echo '%s' | %s/bin/%s -s - | diff %s/%s/%s -",
-                 res.output, ROOT_DIR, DYNVM, ROOT_DIR, TEST_DIR, ansfile);
+    CMD = format("echo '%s' | %s/bin/%s %s -s - | diff %s/%s/%s -",
+                 res.output,
+                 ROOT_DIR, DYNVM, use_jit ? "-j" : "",
+                 ROOT_DIR, TEST_DIR, ansfile);
     if(DEBUG) CMD.writeln;
-
     return true;
   }
 
@@ -123,14 +126,14 @@ class SluaTest : Test
   }
 }
 
-Test createTest(string name)
+Test createTest(string name, bool use_jit=false)
 {
   // stringify func (required for the mixin case to compile)
   auto s(string t){ return "\""~t~"\""; }
 
   switch(name.extension) {
-    case mixin(s(HlasmTest.ext)):  return new HlasmTest(name);
-    case mixin(s(SluaTest.ext)):   return new SluaTest(name);
+    case mixin(s(HlasmTest.ext)):  return new HlasmTest(name, use_jit);
+    case mixin(s(SluaTest.ext)):   return new SluaTest(name, use_jit);
     default:
       throw new TesterError("Failed to find test type for "~name);
   }
@@ -139,7 +142,7 @@ Test createTest(string name)
 int[string]  test_ans_limbo;
 Test[string] test_map;
 
-void build_test_map()
+void build_test_map(bool use_jit)
 {
 
   auto dir = buildNormalizedPath(ROOT_DIR, TEST_DIR);
@@ -170,7 +173,7 @@ void build_test_map()
     else {
       if(testname in test_map)
         throw new TesterError(format("Test '%s' already exists for '%s'", testname, fname));
-      test_map[testname] = createTest(fname);
+      test_map[testname] = createTest(fname, use_jit);
     }
   }
 
@@ -190,17 +193,17 @@ void build_test_map()
 
 }
 
-int run()
+int run(bool use_jit)
 {
   select_binaries();
-  build_test_map();
+  build_test_map(use_jit);
 
   // a nice python-style 'c'*5 string utility
   auto s(char c, uint times) { char[] s; s.length = times; foreach(i; 0..times) s[i] = c; return s;}
   void write_separator(char c) { writeln(s(c, SEPARATOR_SIZE)); }
 
   write_separator('=');
-  writef("Running Tester with %d tests using '%s':\n", test_map.length, DYNVM);
+  writef("Running Tester with %d tests using '%s'%s:\n", test_map.length, DYNVM, use_jit ? "in JIT mode" : "");
   write_separator('=');
   writef("\n");
 
@@ -248,10 +251,12 @@ int main(string[] args)
 {
   bool silent  = false;
   bool verbose = false;
+  bool use_jit = false;
 
   getopt(args,
          "silent|s",  &silent,
-         "verbose|v", &verbose);
+         "verbose|v", &verbose,
+         "use-jit|j", &use_jit);
 
   if(silent && verbose) {
     stderr.writeln("Error: --silent and --verbose cannot be used at the same time!");
@@ -263,7 +268,7 @@ int main(string[] args)
 
 
   ROOT_DIR = args[0].dirName.absolutePath.buildNormalizedPath("..");
-  try { return run(); }
+  try { return run(use_jit); }
   catch(TesterError ex) { stderr.writeln("ERROR: ", ex.msg); }
 
   return 1;

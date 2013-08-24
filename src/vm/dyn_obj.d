@@ -17,6 +17,18 @@ auto writeObjectStats(IndentedWriter iw)
   return iw;
 }
 
+// a stub to perform the virt. table lookup, to make calling
+// easier from jit'd code...
+public DynObject DynObject_call2(DynObject a, DynObject b, DynObject ctx)
+{
+  return ctx.call(a, b);
+}
+
+public bool DynObject_truthiness(DynObject ctx)
+{
+  return ctx.truthiness;
+}
+
 class DynObject
 {
   uint id;
@@ -62,6 +74,11 @@ class DynObject
   DynObject call(DynObject a, DynObject b)
   {
     assert(0, "Call attempted on uncallable DynObject");
+  }
+
+  final DynObject __template_get(string s)()
+  {
+    return this.get(s);
   }
 
   final DynObject get(string name)

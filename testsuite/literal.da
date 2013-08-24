@@ -1,3 +1,8 @@
 
         LITERAL r0  #43
-        RET     r0
+        LITERAL r1  #34
+        ADD     r2  r1  r0
+        LITERAL r0  #3
+        MUL     r2  r2  r0
+        MOVE    r3  r2
+        RET     r3

@@ -1,14 +1,22 @@
 #!/bin/bash
 
-if [ "$1" == "" ]; then
+M=$1
+O=$2
+if [ "$1" == "-j" ]; then
+    M=$2
+    O=$1
+fi
+
+
+if [ "$M" == "" ]; then
     MODE=release
-elif [ "$1" == "d" ]; then
+elif [ "$M" == "d" ]; then
     MODE=debug
-elif [ "$1" == "r" ]; then
+elif [ "$M" == "r" ]; then
     MODE=release
 else
     echo "Error: invalid argument"
     exit 1
 fi
 
-make $MODE && ./bin/tester.d
+make $MODE && ./bin/tester.d $O

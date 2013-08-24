@@ -1,10 +1,11 @@
 module hlasm.instructions;
 
+import common.common;
 import std.exception;
-import std.bitmanip;
 import std.conv;
 import std.string;
 import std.stdio;
+import std.bitmanip;
 
 // TEST(iABx)          register   boolean              |  if(bool(R[A]) != Bx) PC++, skip next instruction
 // JMP(isBx)                     signed-int            |  PC += sBx
@@ -30,7 +31,6 @@ enum IOpcode
     DIV,
 }
 
-private struct IStruct(Fields...) { mixin(bitfields!(Fields)); }
 enum IFormat { iABC, iAB, iA, iABx, isBx };
 
 // convert functions between int and sbx
@@ -66,29 +66,30 @@ IFormat[IOpcode.max+1] instrTable =
     IOpcode.DIV:         IFormat.iABC,
 ];
 
+private struct BitFieldStruct(Fields...) { mixin(bitfields!(Fields)); }
 union IData
 {
     uint raw;
 
-    IStruct!(
+    BitFieldStruct!(
         IOpcode, "opcode",  6,
         uint,    "rest",   26
     ) instr;
 
-    IStruct!(
+    BitFieldStruct!(
         IOpcode, "opcode",  6,
         uint,    "a",       8,
         uint,    "c",       9,
         uint,    "b",       9
              ) iABC, iAB, iA;
 
-    IStruct!(
+    BitFieldStruct!(
         IOpcode, "opcode",  6,
         uint,    "a",       8,
         uint,    "bx",     18
     ) iABx;
 
-    IStruct!(
+    BitFieldStruct!(
         IOpcode, "opcode",  6,
         uint,    "sbx",    26
     ) isBx;

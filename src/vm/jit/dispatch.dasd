@@ -68,14 +68,30 @@ void unimpl(IOpcode op)
   assert(false, "Error: opcode \""~op.to!string~"\" is unimplemented");
 }
 
+DynObject callOpFuction(uint regB, uint regC, ref State state)
+{
+  DynObject[] args;
+  uint arg_num = regB+1;
+  uint arg_end = regC;
+  foreach(i; arg_num..arg_end+1)
+    args ~= state.getRegister(i);
+  return state.getRegister(regB).call(args);
+}
+
 void runCode(CodeObject co, bool silent)
 {
   auto state = State(co);
+  auto getGlobal = (&state.getGlobal).funcptr;
+  auto setGlobal = (&state.setGlobal).funcptr;
   auto getRegister = (&state.frame.getRegister).funcptr;
   auto setRegister = (&state.frame.setRegister).funcptr;
   auto getLiteralObj = (&state.frame.getLiteralObj).funcptr;
   auto getLiteral = (&state.frame.getLiteral).funcptr;
   auto literal_truthiness = &Literal.truthiness;
+  auto createNewObject = (){ return DynObjectBuiltin.create!("object"); };
+  auto selfGet = (&state.selfGet).funcptr;
+  auto selfSet = (&state.selfSet).funcptr;
+  auto callOp = &callOpFuction;
 
   mixin(DasmDecl("d"));
   d.init(1);
@@ -134,8 +150,15 @@ void runCode(CodeObject co, bool silent)
         | call_arg3 setRegister, iABx_a, rax, r14
         break;
 
-      case IOpcode.LOADGLOBAL:  op.unimpl; break;
-      case IOpcode.STOREGLOBAL: op.unimpl; break;
+      case IOpcode.LOADGLOBAL:
+        | call_arg2 getGlobal, iABx_bx, r15
+        | call_arg3 setRegister, iABx_a, rax, r14
+        break;
+
+      case IOpcode.STOREGLOBAL:
+        | call_arg2 getRegister, iABx_a, r14
+        | call_arg3 setGlobal, iABx_bx, rax, r15
+        break;
 
       case IOpcode.MOVE:
         | call_arg2 getRegister, inst.iAB.b, r14
@@ -147,13 +170,32 @@ void runCode(CodeObject co, bool silent)
         | mov  [r15+State._ret.offsetof], rax
         done = true; break;
 
-      case IOpcode.NEWOBJECT:   op.unimpl; break;
-      case IOpcode.SETSELF:     op.unimpl; break;
-      case IOpcode.GET:         op.unimpl; break;
-      case IOpcode.SET:         op.unimpl; break;
-      case IOpcode.CALL:        op.unimpl; break;
-      case IOpcode.TEST:
+      case IOpcode.NEWOBJECT:
+        | call_arg0 createNewObject
+        | call_arg3 setRegister, inst.iA.a, rax, r14
+        break;
 
+      case IOpcode.SETSELF:
+        | call_arg2 getRegister, inst.iAB.a, r14
+        | mov  [r15+State._self.offsetof], rax
+        break;
+
+      case IOpcode.GET:
+        | call_arg2 selfGet, iABx_bx, r15
+        | call_arg3 setRegister, iABx_a, rax, r14
+        break;
+
+      case IOpcode.SET:
+        | call_arg2 getRegister, iABx_a, r14
+        | call_arg3 selfSet, iABx_bx, rax, r15
+        break;
+
+      case IOpcode.CALL:
+        | call_arg3 callOp, inst.iABC.b, inst.iABC.c, r15
+        | call_arg3 setRegister, inst.iABC.a, rax, r14
+        break;
+
+      case IOpcode.TEST:
         //bool t  = state.getRegister(inst.iABx.a).truthiness;
         | call_arg2 getRegister, iABx_a, r14
         | call_arg1 cast(void*)&DynObject_truthiness, rax

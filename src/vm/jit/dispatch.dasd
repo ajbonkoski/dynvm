@@ -96,8 +96,7 @@ void runCode(CodeObject co, bool silent)
   mixin(DasmDecl("d"));
   d.init(1);
   d.setup(actions);
-  auto maxpc = (co.inst.length-1).to!int;
-  d.growpc(maxpc);
+  d.growpc(co.inst.length.to!int);
   Instruction inst;
 
   void genBinop(string name)()

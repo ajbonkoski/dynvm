@@ -114,10 +114,10 @@ void runCode(CodeObject co, bool silent)
     //auto obj_a = obj_b.get(name).call(obj_b, obj_c);
     | call_arg1 getBinop, rax
 
-    | mov  rdi, rax
-    | pop  rdx
+    | mov  rdx, rax
     | pop  rsi
-    | call_arg0 cast(void*)&DynObject_call2
+    | pop  rdi
+    | call_arg0 cast(void*)&Dyn_call2
 
     //state.setRegister(inst.iABC.a, obj_a);
     | call_arg3 setRegister, inst.iABC.a, rax, r14
@@ -197,7 +197,7 @@ void runCode(CodeObject co, bool silent)
       case IOpcode.TEST:
         //bool t  = state.getRegister(inst.iABx.a).truthiness;
         | call_arg2 getRegister, iABx_a, r14
-        | call_arg1 cast(void*)&DynObject_truthiness, rax
+        | call_arg1 cast(void*)&Dyn_truthiness, rax
         | mov  rbx, rax
 
         //bool tl = state.getLiteral(inst.iABx.bx).truthiness;
@@ -237,5 +237,5 @@ void runCode(CodeObject co, bool silent)
   //state.ret.writeln;
   d.free;
 
-  state.ret.Dyn_toString.writeln;
+  state.ret.Dyn_pretty.writeln;
 }

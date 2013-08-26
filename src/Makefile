@@ -24,6 +24,7 @@ vm/dyn_obj.d             \
 vm/stack_frame.d         \
 vm/state.d               \
 vm/interpreter.d         \
+vm/gc/gc.d               \
 
 DYNVM_DASD_SRC =              \
 	vm/jit/dynasm_util.d  \

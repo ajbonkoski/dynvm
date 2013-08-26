@@ -63,6 +63,12 @@ struct DynVTableData
   bool function(DynObject)                           truthiness;
 }
 
+DynVTable InheritVTable(DynVTable vtable)
+{
+  auto vt = GCAlloc!DynVTableData;
+  *vt = *vtable; // bitwise copy
+  return vt;
+}
 
 
 /*************************************************************/
@@ -172,7 +178,7 @@ bool DynObject_truthiness(DynObject self){ return true; }
 
 
 /*************************************************************/
-/***************** Native Binary Functions *******************/
+/**************** Native Binary Int Functions ****************/
 /*************************************************************/
 
 alias DynNativeBinIntData* DynNativeBinInt;
@@ -184,13 +190,11 @@ struct DynNativeBinIntData
 
 DynVTable DynNativeBinInt_createVTable(string op)()
 {
-  auto vt = GCAlloc!DynVTableData;
+  auto vt       = DynObject_vtable.InheritVTable;
   vt.toString   = &DynNativeBinInt_toString!op;
-  vt.pretty     = DynObject_vtable.pretty;
   vt.call       = &DynNativeBinInt_call!op;
   vt.call1      = &DynNativeBinInt_call1!op;
   vt.call2      = &DynNativeBinInt_call2!op;
-  vt.truthiness = DynObject_vtable.truthiness;
   return vt;
 }
 
@@ -238,7 +242,7 @@ string DynNativeBinInt_toString(string op)(DynObject self_)
 
 
 /*************************************************************/
-/********************* DynInt Struct *************************/
+/******************* DynIntClass Struct **********************/
 /*************************************************************/
 
 alias DynIntClassData* DynIntClass;
@@ -270,7 +274,7 @@ static this()
 
 
 /*************************************************************/
-/******************** DynObject Struct ***********************/
+/********************* DynInt Struct *************************/
 /*************************************************************/
 
 alias DynIntData* DynInt;
@@ -283,12 +287,9 @@ struct DynIntData
 static DynVTable DynInt_vtable;
 static this(){
   alias DynInt_vtable vt;
-  vt = GCAlloc!DynVTableData;
+  vt            = DynObject_vtable.InheritVTable;
   vt.toString   = &DynInt_toString;
   vt.pretty     = &DynInt_pretty;
-  vt.call       = DynObject_vtable.call;
-  vt.call1      = DynObject_vtable.call1;
-  vt.call2      = DynObject_vtable.call2;
   vt.truthiness = &DynInt_truthiness;
 }
 
@@ -330,13 +331,165 @@ bool DynInt_truthiness(DynObject self_)
 
 
 
+/*************************************************************/
+/**************** Native Binary Str Functions ****************/
+/*************************************************************/
+
+alias DynNativeBinStrData* DynNativeBinStr;
+struct DynNativeBinStrData
+{
+  DynObjectData obj;
+};
+
+
+DynVTable DynNativeBinStr_createVTable(string op)()
+{
+  auto vt       = DynObject_vtable.InheritVTable;
+  vt.toString   = &DynNativeBinStr_toString!op;
+  vt.call       = &DynNativeBinStr_call!op;
+  vt.call1      = &DynNativeBinStr_call1!op;
+  vt.call2      = &DynNativeBinStr_call2!op;
+  return vt;
+}
+
+DynObject DynNativeBinStr_create(string op)()
+{
+  auto obj = GCAlloc!DynNativeBinStrData;
+  DynNativeBinStr_init!op(obj);
+  return cast(DynObject) obj;
+}
+
+void DynNativeBinStr_init(string op)(DynNativeBinStr self)
+{
+  DynObject_init(&self.obj);
+  self.obj.vtable = DynNativeBinStr_createVTable!op;
+}
+
+DynObject DynNativeBinStr_binop(string op)(DynObject a_, DynObject b_) {
+   auto a = cast(DynString) a_;
+   auto b = cast(DynString) b_;
+   static if(op == "+") {
+     return DynString_create(a.s ~ b.s);
+   } else {
+     static assert(false, format("Error, unrecogized op in DynNativeBinStr_binop: %s", op));
+   }
+}
+
+DynObject DynNativeBinStr_call(string op)(DynObject[] args, DynObject self)
+{
+  assert(args.length == 2);
+  return DynNativeBinStr_binop!op(args[0], args[1]);
+}
+
+DynObject DynNativeBinStr_call1(string op)(DynObject a, DynObject self)
+{
+  assert(false);
+}
+
+DynObject DynNativeBinStr_call2(string op)(DynObject a, DynObject b, DynObject self)
+{
+  return DynNativeBinStr_binop!op(a, b);
+}
+
+string DynNativeBinStr_toString(string op)(DynObject self_)
+{
+  auto self = cast(DynNativeBinStr) self_;
+  return format("DynNativeBinStr(id=%d, op=%s)", self.obj.id, op);
+}
+
+
+
+/*************************************************************/
+/***************** DynStringClass Struct *********************/
+/*************************************************************/
+
+alias DynStringClassData* DynStringClass;
+struct DynStringClassData
+{
+  DynObjectData obj;
+
+  // statics
+  static DynStringClass singleton = null;
+}
+
+static this()
+{
+  DynStringClassData.singleton = GCAlloc!DynStringClassData;
+  auto obj = &DynStringClassData.singleton.obj;
+  DynObject_init(obj);
+  DynObject_set("__op_add", DynNativeBinStr_create!"+",  obj);
+}
+
+
+
+/*************************************************************/
+/******************** DynString Struct ***********************/
+/*************************************************************/
+
+alias DynStringData* DynString;
+struct DynStringData
+{
+  DynObjectData obj;
+  string s;
+}
+
+static DynVTable DynString_vtable;
+static this(){
+  alias DynString_vtable vt;
+  vt            = DynObject_vtable.InheritVTable;
+  vt.toString   = &DynString_toString;
+  vt.pretty     = &DynString_pretty;
+  vt.truthiness = &DynString_truthiness;
+}
+
+DynObject DynString_create(string s)
+{
+  auto self = GCAlloc!DynStringData;
+  DynString_init(s, self);
+  return cast(DynObject) self;
+}
+
+void DynString_init(string s, DynString self)
+{
+  auto obj = &self.obj;
+  DynObject_init(obj);
+  obj.parent = cast(DynObject) DynStringClass.singleton;
+  assert(obj.parent !is null);
+  obj.vtable = DynString_vtable;
+  self.s = s;
+}
+
+string DynString_toString(DynObject self_)
+{
+  auto self = cast(DynString) self_;
+  return format("DynString(id=%d, \"%s\")", self.obj.id, self.s);
+}
+
+string DynString_pretty(DynObject self_)
+{
+  auto self = cast(DynString) self_;
+  return format("\"%s\"", self.s);
+}
+
+// int truthiness is C-style
+bool DynString_truthiness(DynObject self_)
+{
+  auto self = cast(DynString) self_;
+  return self.s.length != 0;
+}
+
+
+
+
+
+
 struct DynObjectBuiltin
 {
   static DynObject create(T)(T val) if(is(T == Literal))
   {
     final switch(val.type)
     {
-      case LType.String:  assert(false, "String in unimpl");//return new DynString(val.s);
+      case LType.String:  return DynString_create(val.s);
       case LType.Int:     return DynInt_create(val.i);
     }
   }

@@ -25,7 +25,7 @@ struct GCStateStruct
   ubyte *mem_end = null;
   ubyte *mem_ptr = null;
 
-  static immutable BLOCK_SIZE = (2<<13);
+  static immutable BLOCK_SIZE = (2<<12);
   void alloc_new_block()
   {
     mem_ptr = mem_start = cast(ubyte*) malloc(BLOCK_SIZE);
@@ -43,7 +43,7 @@ struct GCStateStruct
       alloc_new_block();
       ret = mem_ptr;
       mem_ptr += size_align;
-      assert(mem_ptr > mem_end);
+      assert(mem_ptr <= mem_end);
     }
 
     return ret;

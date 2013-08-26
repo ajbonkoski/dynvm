@@ -2,6 +2,7 @@ module vm.dyn_obj;
 
 import std.format;
 
+import std.stdio;
 import std.string;
 import std.algorithm;
 import std.conv;
@@ -18,326 +19,315 @@ auto writeObjectStats(IndentedWriter iw)
   return iw;
 }
 
-// a stub to perform the virt. table lookup, to make calling
-// easier from jit'd code...
-public DynObject DynObject_call2(DynObject a, DynObject b, DynObject ctx)
+
+
+/*************************************************************/
+/********* Helper functions to enable a UFCS style ***********/
+/*************************************************************/
+
+public DynObject Dyn_get(DynObject ctx, string name)
+{ return DynObject_get(name, ctx); }
+
+public DynObject Dyn__template_get(string name)(DynObject ctx)
+{ return DynObject_get(name, ctx); }
+
+public DynObject Dyn_call(DynObject ctx, DynObject[] args,)
+{ return ctx.vtable.call(args, ctx); }
+
+public DynObject Dyn_call2(DynObject ctx, DynObject a, DynObject b)
+{ return ctx.vtable.call2(a, b, ctx); }
+
+public string Dyn_toString(DynObject ctx)
+{ return ctx.vtable.toString(ctx); }
+
+public string Dyn_pretty(DynObject ctx)
+{ return ctx.vtable.pretty(ctx); }
+
+public bool Dyn_truthiness(DynObject ctx)
+{ return ctx.vtable.truthiness(ctx); }
+
+
+
+/*************************************************************/
+/******************** DynVTable Struct ***********************/
+/*************************************************************/
+
+alias DynVTableData* DynVTable;
+struct DynVTableData
 {
-  return ctx.call2(a, b);
+  string function(DynObject)                         toString;
+  string function(DynObject)                         pretty;
+  DynObject function(DynObject[],DynObject)          call;
+  DynObject function(DynObject,DynObject)            call1;
+  DynObject function(DynObject,DynObject,DynObject)  call2;
+  bool function(DynObject)                           truthiness;
 }
 
-public bool DynObject_truthiness(DynObject ctx)
-{
-  return ctx.truthiness;
-}
 
-alias DynObjectVTableData* DynObjectVTable;
-struct DynObjectVTableData
-{
-  string function(void*)                               toString;
-  DynObject function(DynObject[] args, void*)          call;
-  DynObject function(DynObject a, void*)               call1;
-  DynObject function(DynObject a, DynObject b, void*)  call2;
-  bool function(void*)                                 truthiness;
-}
+
+/*************************************************************/
+/******************** DynObject Struct ***********************/
+/*************************************************************/
 
 alias DynObjectData* DynObject;
-immutable DynObjectInherit = "DynObjectData inherit; alias inherit this;";
 struct DynObjectData
 {
-  /*** Data ***/
   GCObjectHeader gcheader;
   uint id;
-  DynObject parent;
-  DynObjectVTable vtable;
+  DynObject parent = null;
+  DynVTable vtable = null;
+  Hashtable!DynObject table;
 
-  static DynObjectVTable myvtable;
-  static this(){
-    myvtable = cast(DynObjectVTable)  GCAlloc(DynObjectVTableData.sizeof);
-    myvtable.toString   = cast(string function(void*)) (&DynObject.toString).funcptr;
-    myvtable.call       = cast(DynObject function(DynObject[],void*)) (&DynObject.call).funcptr;
-    myvtable.call1      = cast(DynObject function(DynObject,void*)) (&DynObject.call1).funcptr;
-    myvtable.call2      = cast(DynObject function(DynObject,DynObject,void*)) (&DynObject.call2).funcptr;
-    myvtable.truthiness = cast(bool function(void*)) (&DynObject.truthiness).funcptr;
-  }
-
-
-  DynvmHashTable!DynObject my_table = null;
-  DynvmHashTable!DynObject table = null;
-
-  /*** Methods ***/
+  // statics
   static string parent_name = "__parent__";
   static uint next_id = 0;
+};
 
-  static DynObject create()
-  {
-    auto obj = GCAlloc!DynObjectData;
-    (*obj).init();
-    return obj;
-  }
-
-  void init()
-  {
-    id = next_id++;
-    vtable = myvtable;
-  }
-
-  string toString()
-  {
-    return format("DynObject(id=%d)");
-  }
-
-  DynObject call(DynObject[] args)
-  {
-    assert(0, "Call attempted on uncallable DynObject");
-  }
-
-  DynObject call1(DynObject a)
-  {
-    assert(0, "Call attempted on uncallable DynObject");
-  }
-
-  DynObject call2(DynObject a, DynObject b)
-  {
-    assert(0, "Call attempted on uncallable DynObject");
-  }
-
-  DynObject __template_get(string s)()
-  {
-    return this.get(s);
-  }
-
-  DynObject get(string name)
-  {
-    if(name == parent_name)
-      return parent;
-
-    if(table is null) {
-      if(my_table is null)
-        table = parent.table;
-      else
-        table = my_table;
-    }
-
-    // precompute the hash (to save time)
-    ulong hash = table.computeHash(name);
-
-    // search the inheritance chain
-    DynObject obj = &this;
-    while(obj) {
-
-      DynObject* val = null;
-      val = table.get(name);
-      if(val) return *val;
-      else    obj = obj.parent;
-    }
-
-    assert(false, format("get operation failed in DynObject for '%s'", name));
-  }
-
-  void ensure_init()
-  {
-    if(table !is null)
-      return;
-
-    // we only init table on demand!
-    my_table = new DynvmHashTable!DynObject();
-    table = my_table;
-  }
-
-  void set(string name, DynObject obj)
-  {
-    if(name == parent_name) {
-      parent = obj;
-      return;
-    }
-
-    ensure_init();
-    table.set(name, obj);
-  }
-
-  // generic objects are always true!
-  bool truthiness(){ return true; }
+static DynVTable DynObject_vtable;
+static this(){
+  alias DynObject_vtable vt;
+  vt = GCAlloc!DynVTableData;
+  vt.toString   = &DynObject_toString;
+  vt.pretty     = &DynObject_toString;
+  vt.call       = &DynObject_call;
+  vt.call1      = &DynObject_call1;
+  vt.call2      = &DynObject_call2;
+  vt.truthiness = &DynObject_truthiness;
 }
 
-// class DynStringClass : DynObject
-// {
-//   static DynStringClass singleton;
-//   static this() { singleton = new DynStringClass(); }
+DynObject DynObject_create()
+{
+  auto self = GCAlloc!DynObjectData;
+  DynObject_init(self);
+  return self;
+}
 
-//   this() {
-//     set("__op_add", new DynNativeBinFunc(&NativeBinStrConcat));
-//   }
-// }
+void DynObject_init(DynObject self)
+{
+  self.id = DynObject.next_id++;
+  self.table = null;
+  self.vtable = DynObject_vtable;
+}
+
+string DynObject_toString(DynObject self)
+{
+  return format("DynObject(id=%d)", self.id);
+}
+
+DynObject DynObject_call(DynObject[] args, DynObject self)
+{
+  assert(0, "Call attempted on uncallable DynObject");
+}
+
+DynObject DynObject_call1(DynObject a, DynObject self)
+{
+  assert(0, "Call attempted on uncallable DynObject");
+}
+
+DynObject DynObject_call2(DynObject a, DynObject b, DynObject self)
+{
+  assert(0, "Call attempted on uncallable DynObject");
+}
+
+DynObject DynObject__template_get(string s)(DynObject self)
+{
+  return DynObject_get(s, self);
+}
+
+DynObject DynObject_get(string name, DynObject self)
+{
+  if(name == self.parent_name)
+    return self.parent;
+
+  // search the inheritance chain
+  auto obj = self;
+  while(obj) {
+    // find next mapped table
+    if(obj.table is null) {
+      obj = obj.parent;
+      continue;
+    }
+
+    DynObject* val = obj.table.get(name);
+    if(val) {
+      return *val;
+    } else {
+      obj = obj.parent;
+    }
+  }
+
+  assert(false, format("get operation failed in DynObject for '%s'", name));
+}
+
+void DynObject_set(string name, DynObject obj, DynObject self)
+{
+  if(self.table is null)
+    self.table = new DynvmHashTable!DynObject;
+  self.table.set(name, obj);
+}
+
+bool DynObject_truthiness(DynObject self){ return true; }
+
+
+
+
+/*************************************************************/
+/***************** Native Binary Functions *******************/
+/*************************************************************/
+
+alias DynNativeBinIntData* DynNativeBinInt;
+struct DynNativeBinIntData
+{
+  DynObjectData obj;
+};
+
+
+DynVTable DynNativeBinInt_createVTable(string op)()
+{
+  auto vt = GCAlloc!DynVTableData;
+  vt.toString   = &DynNativeBinInt_toString!op;
+  vt.pretty     = DynObject_vtable.pretty;
+  vt.call       = &DynNativeBinInt_call!op;
+  vt.call1      = &DynNativeBinInt_call1!op;
+  vt.call2      = &DynNativeBinInt_call2!op;
+  vt.truthiness = DynObject_vtable.truthiness;
+  return vt;
+}
+
+DynObject DynNativeBinInt_create(string op)()
+{
+  auto obj = GCAlloc!DynNativeBinIntData;
+  DynNativeBinInt_init!op(obj);
+  return cast(DynObject) obj;
+}
+
+void DynNativeBinInt_init(string op)(DynNativeBinInt self)
+{
+  DynObject_init(&self.obj);
+  self.obj.vtable = DynNativeBinInt_createVTable!op;
+}
+
+DynObject DynNativeBinInt_binop(string op)(DynObject a_, DynObject b_) {
+   auto a = cast(DynInt) a_;
+   auto b = cast(DynInt) b_;
+   return DynInt_create(mixin("(a.i"~op~"b.i)").to!long);
+}
+
+DynObject DynNativeBinInt_call(string op)(DynObject[] args, DynObject self)
+{
+  assert(args.length == 2);
+  return DynNativeBinInt_binop!op(args[0], args[1]);
+}
+
+DynObject DynNativeBinInt_call1(string op)(DynObject a, DynObject self)
+{
+  assert(false);
+}
+
+DynObject DynNativeBinInt_call2(string op)(DynObject a, DynObject b, DynObject self)
+{
+  return DynNativeBinInt_binop!op(a, b);
+}
+
+string DynNativeBinInt_toString(string op)(DynObject self_)
+{
+  auto self = cast(DynNativeBinInt) self_;
+  return format("DynNativeBinInt(id=%d, op=%s)", self.obj.id, op);
+}
+
+
+
+/*************************************************************/
+/********************* DynInt Struct *************************/
+/*************************************************************/
 
 alias DynIntClassData* DynIntClass;
 struct DynIntClassData
 {
-  // data: notice, this is just a simple DynObject that is preinit
-  mixin(DynObjectInherit);
+  DynObjectData obj;
 
-  // methods/statics
-  static DynIntClass singleton;
-  static this()
-  {
-    singleton = GCAlloc!DynIntClassData;
-    with(*singleton) {
-      // set("__op_add", new DynNativeBinInt!("+"));
-      // set("__op_sub", new DynNativeBinInt!("-"));
-      // set("__op_mul", new DynNativeBinInt!("*"));
-      // set("__op_div", new DynNativeBinInt!("/"));
-      // set("__op_leq", new DynNativeBinInt!("<="));
-      // set("__op_lt" , new DynNativeBinInt!("<"));
-      // set("__op_geq", new DynNativeBinInt!(">="));
-      // set("__op_gt" , new DynNativeBinInt!(">"));
-      // set("__op_eq" , new DynNativeBinInt!("=="));
-      // set("__op_neq", new DynNativeBinInt!("!="));
-    }
-  }
+  // statics
+  static DynIntClass singleton = null;
 }
 
-// class DynString : DynObject
-// {
-//   string s;
-//   this(string s_)
-//   {
-//     s = s_;
-//     parent = DynStringClass.singleton;
-//     assert(parent !is null);
-//   }
+static this()
+{
+  DynIntClassData.singleton = GCAlloc!DynIntClassData;
+  auto obj = &DynIntClassData.singleton.obj;
+  DynObject_init(obj);
+  DynObject_set("__op_add", DynNativeBinInt_create!"+",  obj);
+  DynObject_set("__op_sub", DynNativeBinInt_create!"-",  obj);
+  DynObject_set("__op_mul", DynNativeBinInt_create!"*",  obj);
+  DynObject_set("__op_div", DynNativeBinInt_create!"/",  obj);
+  DynObject_set("__op_leq", DynNativeBinInt_create!"<=", obj);
+  DynObject_set("__op_lt" , DynNativeBinInt_create!"<",  obj);
+  DynObject_set("__op_geq", DynNativeBinInt_create!">=", obj);
+  DynObject_set("__op_gt" , DynNativeBinInt_create!">",  obj);
+  DynObject_set("__op_eq" , DynNativeBinInt_create!"==", obj);
+  DynObject_set("__op_neq", DynNativeBinInt_create!"!=", obj);
+}
 
-//   override string toString()
-//   {
-//     return format("DynString(id=%d, s=%s)", id, s);
-//   }
 
-//   override string pretty()
-//   {
-//     return format("\"%s\"", s);
-//   }
 
-//   // string truthiness is its length
-//   override bool truthiness(){ return s.length != 0; }
-// }
+/*************************************************************/
+/******************** DynObject Struct ***********************/
+/*************************************************************/
 
 alias DynIntData* DynInt;
 struct DynIntData
 {
-  // data
-  mixin(DynObjectInherit);
+  DynObjectData obj;
   long i;
-
-  // methods/statics
-  static DynObjectVTable myvtable;
-  static this(){
-    myvtable = cast(DynObjectVTable) GCAlloc(DynObjectVTableData.sizeof);
-    myvtable.toString  = cast(string function(void*)) (&DynInt.toString).funcptr;
-    myvtable.call = DynObject.myvtable.call;
-    myvtable.call1 = DynObject.myvtable.call1;
-    myvtable.call2 = DynObject.myvtable.call2;
-    myvtable.truthiness = cast(bool function(void*)) (&DynInt.truthiness).funcptr;
-  }
-
-  static DynInt create(long i_)
-  {
-    DynInt obj = GCAlloc!DynIntData;
-    (*obj).init(i_);
-    return obj;
-  }
-
-  void init(long i_)
-  {
-    i = i_;
-    parent = DynIntClass.singleton;
-    assert(parent !is null);
-    vtable = myvtable;
-  }
-
-  string toString()
-  {
-    return format("DynInt(id=%d, %d)", id, i);
-  }
-
-  // int truthiness is C-style
-  bool truthiness(){ return i != 0; }
 }
 
-//abstract class DynFunc : DynObject {}
+static DynVTable DynInt_vtable;
+static this(){
+  alias DynInt_vtable vt;
+  vt = GCAlloc!DynVTableData;
+  vt.toString   = &DynInt_toString;
+  vt.pretty     = &DynInt_pretty;
+  vt.call       = DynObject_vtable.call;
+  vt.call1      = DynObject_vtable.call1;
+  vt.call2      = DynObject_vtable.call2;
+  vt.truthiness = &DynInt_truthiness;
+}
 
-// alias DynObject function(DynObject a, DynObject b) NativeBinFunc;
-// class DynNativeBinFunc : DynObject
-// {
-//   NativeBinFunc func;
-//   DynObject bind;
-//   this(NativeBinFunc func_){ func = func_; }
-//   this(NativeBinFunc func_, DynObject bind_){ func = func_; bind = bind_; }
+DynObject DynInt_create(long i)
+{
+  auto self = GCAlloc!DynIntData;
+  DynInt_init(i, self);
+  return cast(DynObject) self;
+}
 
-//   override DynObject call(DynObject[] args)
-//   {
-//     if(bind !is null) {
-//       assert(args.length == 1);
-//       return func(bind, args[0]);
-//     } else {
-//       assert(args.length == 2);
-//       return func(args[0], args[1]);
-//     }
-//   }
+void DynInt_init(long i, DynInt self)
+{
+  auto obj = &self.obj;
+  DynObject_init(obj);
+  obj.parent = cast(DynObject) DynIntClass.singleton;
+  assert(obj.parent !is null);
+  obj.vtable = DynInt_vtable;
+  self.i = i;
+}
 
-//   override DynObject call(DynObject a)
-//   {
-//     assert(bind !is null);
-//     return func(bind, a);
-//   }
+string DynInt_toString(DynObject self_)
+{
+  auto self = cast(DynInt) self_;
+  return format("DynInt(id=%d, %d)", self.obj.id, self.i);
+}
 
-//   override DynObject call(DynObject a, DynObject b)
-//   {
-//     assert(bind is null);
-//     return func(a, b);
-//   }
+string DynInt_pretty(DynObject self_)
+{
+  auto self = cast(DynInt) self_;
+  return format("%d", self.i);
+}
 
-//   override string toString()
-//   {
-//     return format("DynNativeBinFunc(id=%d)", id);
-//   }
-// }
+// int truthiness is C-style
+bool DynInt_truthiness(DynObject self_)
+{
+  auto self = cast(DynInt) self_;
+  return self.i != 0;
+}
 
-
-
-/*** Native Binary Functions ***/
-// final class DynNativeBinInt(string op) : DynObject
-// {
-
-//   final DynInt f(DynObject a_, DynObject b_) {
-//     auto a = cast(DynInt) a_;
-//     auto b = cast(DynInt) b_;
-//     return DynInt.create(mixin("a.i"~op~"b.i").to!long);
-//   }
-
-//   override DynObject call(DynObject[] args)
-//   {  assert(args.length == 2); return f(args[0], args[1]);  }
-
-//   override DynObject call(DynObject a)
-//   {
-//     assert(false);
-//   }
-
-//   override DynObject call(DynObject a, DynObject b)
-//   {  return f(a, b);  }
-
-//   override string toString()
-//   {
-//     return format("DynNativeBinInt(id=%d)", id);
-//   }
-
-// }
-
-
-
-// DynObject NativeBinStrConcat(DynObject a_, DynObject b_)
-// {
-//   auto a = cast(DynString) a_;
-//   auto b = cast(DynString) b_;
-//   return new DynString(a.s ~ b.s);
-// }
 
 
 struct DynObjectBuiltin
@@ -347,13 +337,13 @@ struct DynObjectBuiltin
     final switch(val.type)
     {
       case LType.String:  assert(false, "String in unimpl");//return new DynString(val.s);
-      case LType.Int:     return DynInt.create(val.i);
+      case LType.Int:     return DynInt_create(val.i);
     }
   }
 
   static DynObject create(string T)() if(T == "object")
   {
-    return DynObject.create;
+    return DynObject_create;
   }
 }
 

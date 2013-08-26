@@ -4,13 +4,13 @@ import std.conv;
 
 /* This alias sets up which impl is used */
 alias
-HashtableCustom
-//HashtableDefault
+//HashtableCustom
+HashtableDefault
 
 DynvmHashTable;
 
 /* The unified interface that should be expected */
-private interface Hashtable(V)
+interface Hashtable(V)
 {
   // Provided by impls
   ulong computeHash(string s);
@@ -33,7 +33,6 @@ private enum GetSetWrappers =
 /**************************************************************/
 /**************************************************************/
 private:
-public:
 
 struct Pair(V)
 {

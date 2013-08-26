@@ -75,7 +75,7 @@ DynObject callOpFuction(uint regB, uint regC, ref State state)
   uint arg_end = regC;
   foreach(i; arg_num..arg_end+1)
     args ~= state.getRegister(i);
-  return state.getRegister(regB).call(args);
+  return state.getRegister(regB).Dyn_call(args);
 }
 
 void runCode(CodeObject co, bool silent)
@@ -101,7 +101,7 @@ void runCode(CodeObject co, bool silent)
 
   void genBinop(string name)()
   {
-    auto getBinop = (&state._ret.__template_get!name).funcptr;
+    auto getBinop = &Dyn__template_get!name;
 
     //auto obj_c = state.getRegister(inst.iABC.c);
     | call_arg2 getRegister, inst.iABC.c, r14
@@ -237,5 +237,5 @@ void runCode(CodeObject co, bool silent)
   //state.ret.writeln;
   d.free;
 
-  state.ret.pretty.writeln;
+  state.ret.Dyn_toString.writeln;
 }

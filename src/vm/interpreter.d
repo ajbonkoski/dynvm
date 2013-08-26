@@ -17,7 +17,8 @@ private void runLoop(ref State state, CodeObject co, bool silent)
   void binOp(string name)() {
     auto obj_b = state.getRegister(inst.iABC.b);
     auto obj_c = state.getRegister(inst.iABC.c);
-    auto obj_a = obj_b.get(name).call(obj_b, obj_c);
+    auto func_obj = obj_b.Dyn_get(name);
+    auto obj_a = func_obj.Dyn_call2(obj_b, obj_c);
     state.setRegister(inst.iABC.a, obj_a);
   }
 
@@ -79,12 +80,13 @@ private void runLoop(ref State state, CodeObject co, bool silent)
           args ~= state.getRegister(i);
 
         //writeln(args);
-        auto obj = state.getRegister(inst.iABC.b).call(args);
+        auto objB = state.getRegister(inst.iABC.b);
+        auto obj = objB.vtable.call(args, objB);
         state.setRegister(inst.iABC.a, obj);
         break;
 
       case IOpcode.TEST:
-        bool t  = state.getRegister(inst.iABx.a).truthiness;
+        bool t  = state.getRegister(inst.iABx.a).Dyn_truthiness;
         bool tl = state.getLiteral(inst.iABx.bx).truthiness;
         if(t != tl) state.pc += 1;
         break;
@@ -121,7 +123,7 @@ void interpretCode(CodeObject co, bool silent)
     writeln("==== Final State: ====");
     writeln(state.stringify(new IndentedWriter(4)).data);
   } else {
-    writeln(state.ret.pretty());
+    writeln(state.ret.Dyn_pretty);
   }
 
 }

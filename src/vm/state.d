@@ -72,7 +72,7 @@ struct State
     assert(self !is null);
     Literal l = frame.getLiteral(num);
     assert(l.type == LType.String);
-    return self.get(l.s);
+    return DynObject_get(l.s, self);
   }
 
   void selfSet(uint num, DynObject obj)
@@ -80,7 +80,7 @@ struct State
     assert(self !is null);
     Literal l = frame.getLiteral(num);
     assert(l.type == LType.String);
-    return self.set(l.s, obj);
+    return DynObject_set(l.s, obj, self);
   }
 
   auto stringify(IndentedWriter iw)

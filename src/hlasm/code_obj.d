@@ -67,7 +67,7 @@ class CodeObject
     foreach(r; unresovedRefs.keys) {
       int l = labelMap[r];
       foreach(line; unresovedRefs[r]) {
-        uint offset = int2sBx(l - (line+1));
+        int offset = l - (line+1);
         inst[line].resolveRef(offset);
       }
       unresovedRefs.remove(r);

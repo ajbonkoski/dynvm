@@ -5,8 +5,7 @@ import std.getopt;
 
 import hlasm.code_obj;
 import hlasm.assembler;
-import vm.interpreter;
-import vm.jit.dispatch;
+import vm.executor;
 
 int main(string args[])
 {
@@ -38,12 +37,7 @@ int main(string args[])
     }
 
     if(!silent) writeln("==== Starting execution ====");
-
-    if(use_jit)
-      runCode(co, silent);
-    else
-      interpretCode(co, silent);
-
+    co.execute(use_jit, silent);
 
     return 0;
 }

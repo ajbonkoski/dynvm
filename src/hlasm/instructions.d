@@ -23,6 +23,8 @@ enum IOpcode
     SET,
     CALL,
     TEST,
+    JMPTRUE,
+    JMPFALSE,
     JMP,
 
     ADD,
@@ -31,18 +33,28 @@ enum IOpcode
     DIV,
 }
 
-enum IFormat { iABC, iAB, iA, iABx, isBx };
+enum IFormat { iABC, iAB, iA, iABx, iAsBx, isBx };
 
 // convert functions between int and sbx
 // this is needed because sbx is a odd size (26-bit)
-uint int2sBx(int i ){
+uint int_to_sBx26(int i ){
   int v = i>>25;
   enforce(v == 0xffffffff || v == 0x00000000);
   return cast(uint) (i&((1<<26)-1));
 }
 
-int sBx2int(uint i){
+int sBx26_to_int(uint i){
   return ((cast(int)i)<<6)>>6;
+}
+
+uint int_to_sBx18(int i ){
+  int v = i>>17;
+  enforce(v == 0xffffffff || v == 0x00000000);
+  return cast(uint) (i&((1<<18)-1));
+}
+
+int sBx18_to_int(uint i){
+  return ((cast(int)i)<<14)>>14;
 }
 
 
@@ -59,6 +71,8 @@ IFormat[IOpcode.max+1] instrTable =
     IOpcode.SET:         IFormat.iABx,
     IOpcode.CALL:        IFormat.iABC,
     IOpcode.TEST:        IFormat.iABx,
+    IOpcode.JMPTRUE:     IFormat.iAsBx,
+    IOpcode.JMPFALSE:    IFormat.iAsBx,
     IOpcode.JMP:         IFormat.isBx,
     IOpcode.ADD:         IFormat.iABC,
     IOpcode.SUB:         IFormat.iABC,
@@ -88,6 +102,12 @@ union IData
         uint,    "a",       8,
         uint,    "bx",     18
     ) iABx;
+
+    BitFieldStruct!(
+        IOpcode, "opcode",  6,
+        uint,    "a",       8,
+        uint,    "sbx",    18
+    ) iAsBx;
 
     BitFieldStruct!(
         IOpcode, "opcode",  6,
@@ -137,6 +157,11 @@ struct Instruction
           a = a_; bx = b_;
         } break;
 
+        case IFormat.iAsBx: with(i.iAsBx) {
+          opcode = op;
+          a = a_; sbx = b_;
+        } break;
+
         case IFormat.isBx: with(i.isBx) {
           opcode = op;
           sbx = a_;
@@ -164,18 +189,25 @@ struct Instruction
           case IFormat.iABx: with(iABx) {
             return format("%s %d %d", opcode, a, bx);
           }
+          case IFormat.iAsBx: with(iAsBx) {
+            return format("%s %d %d", opcode, a, sbx.sBx18_to_int);
+          }
           break;
           case IFormat.isBx: with(isBx) {
-            return format("%s %d", opcode, sbx.sBx2int);
+            return format("%s %d", opcode, sbx.sBx26_to_int);
           }
           break;
         }
     }
 
-    void resolveRef(uint sBx)
+    void resolveRef(int offset)
     {
-        assert(fmt == IFormat.isBx);
-        isBx.sbx = sBx;
+      if(fmt == IFormat.isBx)
+        isBx.sbx = int_to_sBx26(offset);
+      else if(fmt == IFormat.iAsBx)
+        iAsBx.sbx = int_to_sBx18(offset);
+      else
+        assert(false, "Invalid format in Instruction.resolveRef");
     }
 }
 
@@ -209,25 +241,25 @@ unittest
 
     /** int <-> sBx conversion unittests **/
 
-    assert(int2sBx(33554431)   ==  0x01ffffff);
-    assert(int2sBx(1)          ==  0x00000001);
-    assert(int2sBx(0)          ==  0x00000000);
-    assert(int2sBx(-1)         ==  0x03ffffff);
-    assert(int2sBx(-33554432)  ==  0x02000000);
+    assert(int_to_sBx26(33554431)   ==  0x01ffffff);
+    assert(int_to_sBx26(1)          ==  0x00000001);
+    assert(int_to_sBx26(0)          ==  0x00000000);
+    assert(int_to_sBx26(-1)         ==  0x03ffffff);
+    assert(int_to_sBx26(-33554432)  ==  0x02000000);
 
-    assert(sBx2int(0x01ffffff) ==  33554431);
-    assert(sBx2int(0x00000001) ==  1);
-    assert(sBx2int(0x00000000) ==  0);
-    assert(sBx2int(0x03ffffff) == -1);
-    assert(sBx2int(0x02000000) == -33554432);
+    assert(sBx26_to_int(0x01ffffff) ==  33554431);
+    assert(sBx26_to_int(0x00000001) ==  1);
+    assert(sBx26_to_int(0x00000000) ==  0);
+    assert(sBx26_to_int(0x03ffffff) == -1);
+    assert(sBx26_to_int(0x02000000) == -33554432);
 
     auto fail_throw(A,B)(A function(B) f, B i) {
       try { f(i); return false; } catch(Throwable t) { return true; }}
 
-    assert(fail_throw(&int2sBx,   33554432));
-    assert(fail_throw(&int2sBx,  123456789));
-    assert(fail_throw(&int2sBx,  -33554433));
-    assert(fail_throw(&int2sBx, -123456789));
+    assert(fail_throw(&int_to_sBx26,   33554432));
+    assert(fail_throw(&int_to_sBx26,  123456789));
+    assert(fail_throw(&int_to_sBx26,  -33554433));
+    assert(fail_throw(&int_to_sBx26, -123456789));
 
 }
 

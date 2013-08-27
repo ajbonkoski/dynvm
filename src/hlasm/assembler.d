@@ -159,14 +159,18 @@ uint parseLiteral(CodeObject co, const char[] s)
   }
 }
 
-uint requireSBX(const char[] s, int addr, bool *success)
+uint requireSBX(int size)(const char[] s, int addr, bool *success)
+  if(size == 18 || size == 26)
 {
   *success = true;
 
   try {
     // is it a hand-computed offset?
     if(s.length >= 2 && s[0] == '#') {
-      return int2sBx(to!int(s[1..$]));
+      static if(size == 18)
+        return int_to_sBx18(to!int(s[1..$]));
+      else
+        return int_to_sBx26(to!int(s[1..$]));
     }
 
     // try it as a label
@@ -174,7 +178,10 @@ uint requireSBX(const char[] s, int addr, bool *success)
 
       int *label_lineno = (s in labelMap);
       if(label_lineno) {
-        return int2sBx(*label_lineno - (addr+1));
+        static if(size == 18)
+          return int_to_sBx18(*label_lineno - (addr+1));
+        else
+          return int_to_sBx26(*label_lineno - (addr+1));
       }
 
       // admit failure (and sort it out latter)
@@ -251,10 +258,18 @@ CodeObject assembleFile(File f, bool silent)
         }
         case IFormat.isBx:
           bool success;
-          uint sbx = requireSBX(line.fieldA, co.currentAddress, &success);
+          uint sbx = requireSBX!26(line.fieldA, co.currentAddress, &success);
           // if we didn't succeed, we'll have to come back later to fix it up...
           if(!success) co.addUnresovedRef(line.fieldA.idup);
           co.addInstr(Instruction.create(op, sbx));
+          break;
+        case IFormat.iAsBx:
+          uint a = co.parseRegister(line.fieldA);
+          bool success;
+          uint sbx = requireSBX!18(line.fieldB, co.currentAddress, &success);
+          // if we didn't succeed, we'll have to come back later to fix it up...
+          if(!success) co.addUnresovedRef(line.fieldB.idup);
+          co.addInstr(Instruction.create(op, a, sbx));
           break;
       }
 

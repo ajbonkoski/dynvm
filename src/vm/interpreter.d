@@ -10,7 +10,7 @@ import vm.state;
 
 enum LOUD = false;
 
-private void runLoop(ref State state, CodeObject co, bool silent)
+void interpretCode(ref State state, bool silent)
 {
   Instruction inst;
 
@@ -91,8 +91,18 @@ private void runLoop(ref State state, CodeObject co, bool silent)
         if(t != tl) state.pc += 1;
         break;
 
+      case IOpcode.JMPTRUE:
+        if(state.getRegister(inst.iAsBx.a).Dyn_truthiness)
+          state.pc += inst.iAsBx.sbx.sBx18_to_int;
+        break;
+
+      case IOpcode.JMPFALSE:
+        if(!state.getRegister(inst.iAsBx.a).Dyn_truthiness)
+          state.pc += inst.iAsBx.sbx.sBx18_to_int;
+        break;
+
       case IOpcode.JMP:
-        int offset = inst.isBx.sbx.sBx2int;
+        int offset = inst.isBx.sbx.sBx26_to_int;
         state.pc += offset;
         break;
 
@@ -104,26 +114,4 @@ private void runLoop(ref State state, CodeObject co, bool silent)
 
     }
   }
-}
-
-
-void interpretCode(CodeObject co, bool silent)
-{
-  auto state = State(co);
-
-  try {
-    state.runLoop(co, silent);
-  } catch(Throwable t) {
-    writeln("==== CRASH: ====");
-    writeln(t.msg);
-    writeln(t.info);
-  }
-
-  if(!silent) {
-    writeln("==== Final State: ====");
-    writeln(state.stringify(new IndentedWriter(4)).data);
-  } else {
-    writeln(state.ret.Dyn_pretty);
-  }
-
 }

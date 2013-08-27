@@ -8,17 +8,15 @@
                     LITERAL         r4             #1
                     LITERAL         r5             #1000000
 
-                    SUB   r0  r5  r1
-                    TEST  r0  #0
-                    JMP   WHILE_END_1
+                    SUB      r0  r5  r1
+                    JMPFALSE r0   WHILE_END_1
 WHILE_START_0:
                     MOVE   r0   r3
                     ADD    r3   r2   r3
                     MOVE   r2   r0
                     ADD    r1   r1   r4
 
-                    SUB   r0  r5  r1
-                    TEST  r0  #1
-                    JMP WHILE_START_0
+                    SUB     r0  r5  r1
+                    JMPTRUE r0  WHILE_START_0
 WHILE_END_1:
                     RET  r3

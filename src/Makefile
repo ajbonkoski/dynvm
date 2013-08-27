@@ -13,6 +13,7 @@ DYNVM_PROFILE_BIN = ../bin/dynvm-profile
 DYNVM_OBJ = ../bin/dynvm.o ../bin/dynvm-debug.o ../bin/dynvm-profile.o
 DYNVM_SRC =              \
 common/common.d          \
+common/dynasm_util.d     \
 datastruct/stack.d       \
 datastruct/hashtable.d   \
 main.d                   \
@@ -20,6 +21,7 @@ hlasm/instructions.d     \
 hlasm/literal.d          \
 hlasm/code_obj.d         \
 hlasm/assembler.d        \
+vm/executor.d            \
 vm/dyn_obj.d             \
 vm/stack_frame.d         \
 vm/state.d               \

@@ -19,18 +19,3 @@ void *genCall(ref Dasm d, void *func, void *arg1)
 
   return null;
 }
-
-void printMem(ref Dasm d)
-{
-  foreach(i; 0..d.size) {
-    writef(" %x", d.mem[i]);
-    if(i > 0 && i%16 == 0) writef("\n");
-  }
-}
-
-void printMemRaw(ref Dasm d)
-{
-  foreach(i; 0..d.size) {
-    writef("%c", d.mem[i]);
-  }
-}

@@ -3,6 +3,7 @@ module vm.jit.dispatch;
 import std.conv;
 import std.stdio;
 
+import common.dynasm_util;
 import hlasm.code_obj;
 import hlasm.literal;
 import hlasm.instructions;
@@ -63,6 +64,16 @@ import vm.jit.dynasm_util;
 |  call rax
 |.endmacro
 
+|.macro get_register, regnum, dest_reg
+|  .code
+|  mov  dest_reg, [r13+(regnum*8)]
+|.endmacro
+
+|.macro set_register, regnum, src_reg
+|  .code
+|  mov  [r13+(regnum*8)], src_reg
+|.endmacro
+
 void unimpl(IOpcode op)
 {
   assert(false, "Error: opcode \""~op.to!string~"\" is unimplemented");
@@ -78,9 +89,8 @@ DynObject callOpFuction(uint regB, uint regC, ref State state)
   return state.getRegister(regB).Dyn_call(args);
 }
 
-void runCode(CodeObject co, bool silent)
+void jitCode(ref State state, bool silent)
 {
-  auto state = State(co);
   auto getGlobal = (&state.getGlobal).funcptr;
   auto setGlobal = (&state.setGlobal).funcptr;
   auto getRegister = (&state.frame.getRegister).funcptr;
@@ -96,38 +106,32 @@ void runCode(CodeObject co, bool silent)
   mixin(DasmDecl("d"));
   d.init(1);
   d.setup(actions);
-  d.growpc(co.inst.length.to!int);
+  d.growpc(state.frame.code.inst.length.to!int);
   Instruction inst;
 
   void genBinop(string name)()
   {
     auto getBinop = &Dyn__template_get!name;
 
-    //auto obj_c = state.getRegister(inst.iABC.c);
-    | call_arg2 getRegister, inst.iABC.c, r14
-    | push rax
-
-    //auto obj_b = state.getRegister(inst.iABC.b);
-    | call_arg2 getRegister, inst.iABC.b, r14
-    | push rax
+    | get_register inst.iABC.c, r9
+    | get_register inst.iABC.b, r10
 
     //auto obj_a = obj_b.get(name).call(obj_b, obj_c);
-    | call_arg1 getBinop, rax
-
-    | mov  rdx, rax
-    | pop  rsi
-    | pop  rdi
-    | call_arg0 cast(void*)&Dyn_call2
+    | call_arg1 getBinop, r10
+    | mov  rbx, [rax+DynObject.vtable.offsetof]
+    | call_arg3 [rbx+DynVTable.call2.offsetof], r10, r9, rax
 
     //state.setRegister(inst.iABC.a, obj_a);
-    | call_arg3 setRegister, inst.iABC.a, rax, r14
-
+    | set_register inst.iABC.a, rax
   }
 
-  // save the State* to the top of stack
+  // r15: state (State*)
+  // r14: state.frame (StackFrame*)
+  // r13: state.frame.locals (DynObject[].ptr)
   | push rdi
   | mov  r15, rdi
   | mov  r14, [r15+State.frame.offsetof]
+  | mov  r13, [r14+(state.frame.locals.offsetof+8)]
 
   bool done = false;
   uint inst_num = 0;
@@ -146,57 +150,57 @@ void runCode(CodeObject co, bool silent)
     {
       case IOpcode.LITERAL:
         | call_arg2 getLiteralObj, iABx_bx, r14
-        | call_arg3 setRegister, iABx_a, rax, r14
+        | set_register iABx_a, rax
         break;
 
       case IOpcode.LOADGLOBAL:
         | call_arg2 getGlobal, iABx_bx, r15
-        | call_arg3 setRegister, iABx_a, rax, r14
+        | set_register iABx_a, rax
         break;
 
       case IOpcode.STOREGLOBAL:
-        | call_arg2 getRegister, iABx_a, r14
+        | get_register iABx_a, rax
         | call_arg3 setGlobal, iABx_bx, rax, r15
         break;
 
       case IOpcode.MOVE:
-        | call_arg2 getRegister, inst.iAB.b, r14
-        | call_arg3 setRegister, inst.iAB.a, rax, r14
+        | get_register inst.iAB.b, rax
+        | set_register inst.iAB.a, rax
         break;
 
       case IOpcode.RET:
-        | call_arg2 getRegister, inst.iAB.a, r14
+        | get_register inst.iAB.a, rax
         | mov  [r15+State._ret.offsetof], rax
         done = true; break;
 
       case IOpcode.NEWOBJECT:
         | call_arg0 createNewObject
-        | call_arg3 setRegister, inst.iA.a, rax, r14
+        | set_register inst.iA.a, rax
         break;
 
       case IOpcode.SETSELF:
-        | call_arg2 getRegister, inst.iAB.a, r14
+        | get_register inst.iAB.a, rax
         | mov  [r15+State._self.offsetof], rax
         break;
 
       case IOpcode.GET:
         | call_arg2 selfGet, iABx_bx, r15
-        | call_arg3 setRegister, iABx_a, rax, r14
+        | set_register iABx_a, rax
         break;
 
       case IOpcode.SET:
-        | call_arg2 getRegister, iABx_a, r14
+        | get_register iABx_a, rax
         | call_arg3 selfSet, iABx_bx, rax, r15
         break;
 
       case IOpcode.CALL:
         | call_arg3 callOp, inst.iABC.b, inst.iABC.c, r15
-        | call_arg3 setRegister, inst.iABC.a, rax, r14
+        | set_register inst.iABC.a, rax
         break;
 
       case IOpcode.TEST:
         //bool t  = state.getRegister(inst.iABx.a).truthiness;
-        | call_arg2 getRegister, iABx_a, r14
+        | get_register iABx_a, rax
         | call_arg1 cast(void*)&Dyn_truthiness, rax
         | mov  rbx, rax
 
@@ -211,8 +215,24 @@ void runCode(CodeObject co, bool silent)
         | jne =>(state.pc+1)
         break;
 
+      case IOpcode.JMPTRUE:
+        int offset = inst.iAsBx.sbx.sBx18_to_int;
+        //bool t  = state.getRegister(inst.iABx.a).truthiness;
+        | get_register iABx_a, rax
+        | call_arg1 cast(void*)&Dyn_truthiness, rax
+        | jnz =>(state.pc+offset)
+        break;
+
+      case IOpcode.JMPFALSE:
+        int offset = inst.iAsBx.sbx.sBx18_to_int;
+        //bool t  = state.getRegister(inst.iABx.a).truthiness;
+        | get_register iABx_a, rax
+        | call_arg1 cast(void*)&Dyn_truthiness, rax
+        | jz =>(state.pc+offset)
+        break;
+
       case IOpcode.JMP:
-        int offset = inst.isBx.sbx.sBx2int;
+        int offset = inst.isBx.sbx.sBx26_to_int;
         | jmp =>(state.pc + offset)
         break;
 
@@ -227,15 +247,9 @@ void runCode(CodeObject co, bool silent)
   | ret
 
   auto func = d.link_and_encode;
-  //d.printMemRaw;
-  //stdout.flush;
+  if(!silent) { d.printDisassembly; }
 
   func(&state);
-  //writeln("Jit Code is done!");
 
-  //writeln;
-  //state.ret.writeln;
   d.free;
-
-  state.ret.Dyn_pretty.writeln;
 }

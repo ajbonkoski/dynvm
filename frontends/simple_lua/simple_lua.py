@@ -118,8 +118,7 @@ def genInstr_iMb(opcode, self_reg, dest_reg, literal):
            genInstr(opcode[:3], dest_reg, literal)
 
 def genInstr_iJc(opcode, rega, tf, label):
-    return genInstr("TEST", rega, '#{}'.format(1 if tf else 0)) + \
-           genInstr("JMP",  label)
+    return genInstr("JMPTRUE" if tf else "JMPFALSE", rega, label)
 
 LOAD_YES = 1
 LOAD_NO = 2
@@ -138,6 +137,8 @@ instructions = {
     'SETMEMBER':    (genInstr_iMb,  LOAD_NO),  ## aggregate type
     'CALL':         (genInstr_iABC, LOAD_YES),
     'TEST':         (genInstr_iABx, LOAD_NO),
+    'JMPTRUE':      (genInstr_iABx, LOAD_NO),
+    'JMPFALSE':     (genInstr_iABx, LOAD_NO),
     'JMP':          (genInstr_isBx, LOAD_NO),
     'JMPCOND':      (genInstr_iJc,  LOAD_NO),  ## aggregate type
     'ADD':          (genInstr_iABC, LOAD_YES),

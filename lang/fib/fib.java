@@ -8,10 +8,11 @@ class fib
 
         for(long i = 0; i < n; i++) {
             t = b;
-            b = a + b;
+            b = a+b;
             a = t;
         }
 
+        // prints as a signed number in java - argh
         System.out.printf("%d\n", b);
     }
 }

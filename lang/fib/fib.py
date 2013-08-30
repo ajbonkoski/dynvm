@@ -2,13 +2,13 @@
 from sys import argv
 
 def fib(n):
-    SZ = 2**64
+    SZ = 2**32
 
     i = 0
     a, b = 1, 0
     while i < n:
         t = b
-        b = (b + a) % SZ
+        b = (a+b) % SZ
         a = t
         i += 1
 

@@ -2,7 +2,7 @@
 from sys import argv
 
 def fib(n):
-    SZ = 2**64
+    SZ = 2**32
 
     i = 0
     a, b = 1, 0

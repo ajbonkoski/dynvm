@@ -1,6 +1,8 @@
 
 class fib
 {
+    final static long SZ = (1L<<32);
+
     public static void main(String[] args)
     {
         long n = Integer.parseInt(args[0]);
@@ -8,7 +10,7 @@ class fib
 
         for(long i = 0; i < n; i++) {
             t = b;
-            b = a + b;
+            b = (a+b) % SZ;
             a = t;
         }
 

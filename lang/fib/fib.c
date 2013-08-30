@@ -4,6 +4,7 @@ typedef unsigned long ulong;
 
 int main(int argc, char *argv[])
 {
+    ulong SZ = (1L<<32);
     ulong n = atoi(argv[1]);
     ulong a = 1;
     ulong b = 0;
@@ -11,7 +12,7 @@ int main(int argc, char *argv[])
 
     for(ulong i = 0; i < n; i++) {
         t = b;
-        b = a+b;
+        b = (a+b)%SZ;
         a = t;
     }
 

@@ -85,12 +85,12 @@ struct State
 
   auto stringify(IndentedWriter iw)
   {
-    iw.formattedWrite("self: %s\n", self);
-    iw.formattedWrite("ret:  %s\n", ret);
+    iw.formattedWrite("self: %s\n", self.Dyn_toString);
+    iw.formattedWrite("ret:  %s\n", ret.Dyn_toString);
     iw.formattedWrite("Num Globals: %d\n", globals.length);
     iw.indent();
     foreach(s; globals.keys.sort){
-      iw.formattedWrite("%s: %s\n", s, globals[s]);
+      iw.formattedWrite("%s: %s\n", s, globals[s].Dyn_toString);
     }
     iw.unindent();
     iw.formattedWrite("Num Frames:  %d\n", stack.length);

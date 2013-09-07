@@ -31,6 +31,12 @@ enum IOpcode
     SUB,
     MUL,
     DIV,
+    LEQ,
+    LT,
+    GEQ,
+    GT,
+    EQ,
+    NEQ,
 }
 
 enum IFormat { iABC, iAB, iA, iABx, iAsBx, isBx };
@@ -78,6 +84,12 @@ IFormat[IOpcode.max+1] instrTable =
     IOpcode.SUB:         IFormat.iABC,
     IOpcode.MUL:         IFormat.iABC,
     IOpcode.DIV:         IFormat.iABC,
+    IOpcode.LEQ:         IFormat.iABC,
+    IOpcode.LT:          IFormat.iABC,
+    IOpcode.GEQ:         IFormat.iABC,
+    IOpcode.GT:          IFormat.iABC,
+    IOpcode.EQ:          IFormat.iABC,
+    IOpcode.NEQ:         IFormat.iABC,
 ];
 
 private struct BitFieldStruct(Fields...) { mixin(bitfields!(Fields)); }

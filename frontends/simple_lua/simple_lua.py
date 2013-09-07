@@ -41,12 +41,12 @@ binOpNameMap = {
     '-':  ('__op_sub', 'SUB'),
     '*':  ('__op_mul', 'MUL'),
     '/':  ('__op_div', 'DIV'),
-    '<=': ('__op_leq',  None),
-    '<':  ('__op_lt',   None),
-    '>=': ('__op_geq',  None),
-    '>':  ('__op_gt',   None),
-    '==': ('__op_eq',   None),
-    '!=': ('__op_neq',  None),
+    '<=': ('__op_leq', 'LEQ'),
+    '<':  ('__op_lt',  'LT'),
+    '>=': ('__op_geq', 'GEQ'),
+    '>':  ('__op_gt',  'GT'),
+    '==': ('__op_eq',  'EQ'),
+    '!=': ('__op_neq', 'NEQ'),
 }
 
 class LiteralLoadBlock:
@@ -145,6 +145,12 @@ instructions = {
     'SUB':          (genInstr_iABC, LOAD_YES),
     'DIV':          (genInstr_iABC, LOAD_YES),
     'MUL':          (genInstr_iABC, LOAD_YES),
+    'LEQ':          (genInstr_iABC, LOAD_YES),
+    'LT':           (genInstr_iABC, LOAD_YES),
+    'GEQ':          (genInstr_iABC, LOAD_YES),
+    'GT':           (genInstr_iABC, LOAD_YES),
+    'EQ':           (genInstr_iABC, LOAD_YES),
+    'NEQ':          (genInstr_iABC, LOAD_YES),
 }
 
 class UnknownInstruction(Exception): pass

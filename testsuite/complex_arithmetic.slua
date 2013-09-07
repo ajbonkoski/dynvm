@@ -5,7 +5,7 @@
   n = 1000000
   i = 0
 
-while n-i do
+while i < n do
   a = a - b + 5 - 6 + c - 1
   i = i+1
 end

@@ -48,7 +48,15 @@ final class StackFrame
 
   DynObject getLiteralObj(uint num)
   {
-    return DynObjectBuiltin.create(code.getLiteral(num));
+    Literal l = code.getLiteral(num);
+
+    // use integer unboxing?
+    if(l.type == LType.Int)
+      return cast(DynObject) (l.i<<1);
+
+    // regular object... set the tag...
+    auto obj = DynObjectBuiltin.create(l);
+    return cast(DynObject) (cast(long)obj | 1);
   }
 
   auto stringify(IndentedWriter iw)
@@ -56,7 +64,7 @@ final class StackFrame
     iw.formattedWrite("Num locals: %d\n", locals.length);
     iw.indent();
     foreach(i, obj; locals) {
-      iw.formattedWrite("%d: %s\n", i, obj);
+      iw.formattedWrite("%d: %s\n", i, obj.Dyn_toString);
     }
     iw.unindent();
 

@@ -4,7 +4,7 @@ typedef unsigned long ulong;
 
 int main(int argc, char *argv[])
 {
-    ulong SZ = (1L<<32);
+    ulong SZ = (1L<<63);
     ulong n = atoi(argv[1]);
     ulong a = 1;
     ulong b = 0;

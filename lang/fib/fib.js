@@ -6,7 +6,7 @@ if(process.argv.length != 3)
 var n = process.argv[2];
 var a = 1;
 var b = 0;
-var SZ = Math.pow(2,64);
+var SZ = Math.pow(2**64);
 
 for(var i = 0; i < n; i++) {
     t = b;

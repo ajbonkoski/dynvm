@@ -5,7 +5,7 @@ import std.stdio;
 import common.common;
 import hlasm.code_obj;
 import hlasm.instructions;
-import vm.dyn_obj;
+import vm.dyn_obj.dyn_obj;
 import vm.state;
 import vm.gc.types;
 

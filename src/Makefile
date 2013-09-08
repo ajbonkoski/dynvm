@@ -22,7 +22,12 @@ hlasm/literal.d          \
 hlasm/code_obj.d         \
 hlasm/assembler.d        \
 vm/executor.d            \
-vm/dyn_obj.d             \
+vm/dyn_obj/dyn_obj.d     \
+vm/dyn_obj/core.d        \
+vm/dyn_obj/dyn_native.d  \
+vm/dyn_obj/dyn_int.d     \
+vm/dyn_obj/dyn_str.d     \
+vm/dyn_obj/dyn_array.d   \
 vm/stack_frame.d         \
 vm/state.d               \
 vm/interpreter.d         \

@@ -4,7 +4,7 @@ import std.stdio;
 import common.common;
 import hlasm.code_obj;
 import vm.state;
-import vm.dyn_obj;
+import vm.dyn_obj.dyn_obj;
 import vm.interpreter;
 import vm.jit.dispatch;
 

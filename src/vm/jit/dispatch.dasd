@@ -120,48 +120,40 @@ void jitCode(ref State state, bool silent)
     num_pclabels += 2;
     d.growpc(num_pclabels);
 
-    | get_register inst.iABC.c, r10
-    | get_register inst.iABC.b, r9
+    | get_register inst.iABC.c, r9
+    | get_register inst.iABC.b, rax
 
     // check for unboxed ints
-    | mov rax, r9
-    | or  rax, r10
-    | test rax, 0x1
+    | mov rbx, r9
+    | or  rbx, rax
+    | test rbx, 0x1
     | jne =>l1
 
     // emit code for unboxed int
     static if(name == "__op_add") {
-      | add r9, r10
+      | add rax, r9
     } else static if(name == "__op_sub") {
-      | sub r9, r10
+      | sub rax, r9
     } else static if(name == "__op_mul") {
-      | sar r9,  1
-      | sar r10, 1
-      | mov rax, r9
-      | mul r10
-      | mov r9, rax
-      | sal r9, 1
+      | sar rax,  1
+      | sar r9, 1
+      | mul r9
+      | sal rax, 1
     } else static if(name == "__op_div") {
-      | sar r9,  1
-      | sar r10, 1
-      | mov rax, r9
-      | div r10
-      | mov r9, rax
-      | sal r9, 1
+      | sar rax,  1
+      | sar r9, 1
+      | div r9
+      | sal rax, 1
     } else static if(name == "__op_leq") {
-      | xor rax, rax
-      | mov rbx, 1
-      | cmp r9, r10
+      | cmp rax, r9
+      | mov rax, 0
+      | mov rbx, 2
       | cmovle rax, rbx
-      | mov r9, rax
-      | sal r9, 1
     } else static if(name == "__op_lt") {
-      | xor rax, rax
-      | mov rbx, 1
-      | cmp r9, r10
+      | cmp rax, r9
+      | mov rax, 0
+      | mov rbx, 2
       | cmovl rax, rbx
-      | mov r9, rax
-      | sal r9, 1
     } else {
       assert(0, "unimpl");
     }
@@ -171,18 +163,14 @@ void jitCode(ref State state, bool silent)
 
     // emit code for object binops
     auto binop_call = &Dyn_binop!name;
-    | and r9, ~1
-    | and r10, ~1
-    | call_arg2 binop_call, r9, r10
-    | mov r9, rax
-    | or r9, 1
+    | and rax, ~1
+    | and r9,  ~1
+    | call_arg2 binop_call, rax, r9
+    | or rax, 1
     | =>l2:
 
-    // emit code for object
-
-
     //state.setRegister(inst.iABC.a, obj_a);
-    | set_register inst.iABC.a, r9
+    | set_register inst.iABC.a, rax
   }
 
   // r15: state (State*)

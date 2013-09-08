@@ -106,23 +106,75 @@ void jitCode(ref State state, bool silent)
   mixin(DasmDecl("d"));
   d.init(1);
   d.setup(actions);
-  d.growpc(state.frame.code.inst.length.to!int);
+  int num_pclabels = state.frame.code.inst.length.to!int;
+  d.growpc(num_pclabels);
   Instruction inst;
 
   void genBinop(string name)()
   {
     auto Dyn_binop_name = &Dyn_binop!name;
+    int l1 = num_pclabels;
+    int l2 = num_pclabels+1;
+    num_pclabels += 2;
+    d.growpc(num_pclabels);
 
     | get_register inst.iABC.c, r9
     | get_register inst.iABC.b, r10
 
-    if(name == "__op_add") {
+    // check for unboxed ints
+    | mov rax, r9
+    | or  rax, r10
+    | test rax, 0x1
+    | jne =>l1
+
+    // emit code for unboxed int
+    static if(name == "__op_add") {
       | add r9, r10
-    } else if(name == "__op_sub") {
+    } else static if(name == "__op_sub") {
       | sub r9, r10
+    } else static if(name == "__op_mul") {
+      | sar r9,  1
+      | sar r10, 1
+      | mov rax, r9
+      | mul r10
+      | mov r9, rax
+      | sal r9, 1
+    } else static if(name == "__op_div") {
+      | sar r9,  1
+      | sar r10, 1
+      | mov rax, r9
+      | div r10
+      | mov r9, rax
+      | sal r9, 1
+    } else static if(name == "__op_leq") {
+      | xor rax, rax
+      | mov rbx, 1
+      | cmp r9, r10
+      | cmovle rax, rbx
+      | mov r9, rax
+      | sal r9, 1
+    } else static if(name == "__op_lt") {
+      | xor rax, rax
+      | mov rbx, 1
+      | cmp r9, r10
+      | cmovl rax, rbx
+      | mov r9, rax
+      | sal r9, 1
     } else {
       assert(0, "unimpl");
     }
+
+    | jmp =>l2
+    | =>l1:
+
+    // emit code for object binops
+    auto binop_call = &Dyn_binop!name;
+    | call_arg2 binop_call, r9, r10
+    | mov r9, rax
+
+    | =>l2:
+
+    // emit code for object
 
     //state.setRegister(inst.iABC.a, obj_a);
     | set_register inst.iABC.a, r9

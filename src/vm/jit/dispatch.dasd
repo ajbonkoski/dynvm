@@ -89,6 +89,8 @@ void unimpl(IOpcode op)
 //   return state.getRegister(regB).Dyn_call(args);
 // }
 
+void write_int(int i) { i.writeln; }
+
 void jitCode(ref State state, bool silent)
 {
   auto getGlobal = (&state.getGlobal).funcptr;
@@ -118,8 +120,8 @@ void jitCode(ref State state, bool silent)
     num_pclabels += 2;
     d.growpc(num_pclabels);
 
-    | get_register inst.iABC.c, r9
-    | get_register inst.iABC.b, r10
+    | get_register inst.iABC.c, r10
+    | get_register inst.iABC.b, r9
 
     // check for unboxed ints
     | mov rax, r9
@@ -169,12 +171,15 @@ void jitCode(ref State state, bool silent)
 
     // emit code for object binops
     auto binop_call = &Dyn_binop!name;
+    | and r9, ~1
+    | and r10, ~1
     | call_arg2 binop_call, r9, r10
     | mov r9, rax
-
+    | or r9, 1
     | =>l2:
 
     // emit code for object
+
 
     //state.setRegister(inst.iABC.a, obj_a);
     | set_register inst.iABC.a, r9
@@ -275,6 +280,7 @@ void jitCode(ref State state, bool silent)
         int offset = inst.iAsBx.sbx.sBx18_to_int;
         //bool t  = state.getRegister(inst.iABx.a).truthiness;
         | get_register iABx_a, rax
+        | cmp rax, 0
         // | call_arg1 cast(void*)&Dyn_truthiness, rax
         | jnz =>(state.pc+offset)
         break;
@@ -283,6 +289,7 @@ void jitCode(ref State state, bool silent)
         int offset = inst.iAsBx.sbx.sBx18_to_int;
         //bool t  = state.getRegister(inst.iABx.a).truthiness;
         | get_register iABx_a, rax
+        | cmp rax, 0
         // | call_arg1 cast(void*)&Dyn_truthiness, rax
         | jz =>(state.pc+offset)
         break;

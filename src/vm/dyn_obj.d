@@ -63,7 +63,7 @@ public bool Dyn_truthiness(DynObject ctx_)
 {
   long l = cast(long)ctx_;
   if((l & 1) == 0)
-    return l != 0;
+    return l != 0 ? 1 : 0;
 
   auto ctx = cast(DynObject) (cast(long)ctx_ & ~1);
   return ctx.vtable.truthiness(ctx);

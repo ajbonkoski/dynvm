@@ -226,6 +226,12 @@ void jitCode(ref State state, bool silent)
         | set_register inst.iA.a, rax
         break;
 
+      case IOpcode.NEWARRAY:
+        // auto obj = DynArray_create(inst.iABx.bx);
+        // state.setRegister(inst.iABx.a, obj);
+        assert(0, "newarray is unimplemented");
+        break;
+
       case IOpcode.SETSELF:
         | get_register inst.iAB.a, rax
         | mov  [r15+State._self.offsetof], rax

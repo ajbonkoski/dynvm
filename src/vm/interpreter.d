@@ -105,6 +105,11 @@ void interpretCode(ref State state, bool silent)
         state.setRegister(inst.iA.a, DynObjectBuiltin.create!"object");
         break;
 
+      case IOpcode.NEWARRAY:
+        auto obj = DynArray_create(inst.iABx.bx);
+        state.setRegister(inst.iABx.a, obj);
+        break;
+
       case IOpcode.SETSELF:
         state.self = state.getRegister(inst.iAB.a);
         break;

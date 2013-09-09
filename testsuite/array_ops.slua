@@ -1,0 +1,9 @@
+
+a = []
+a.add(a, 1)
+a.add(a, 9)
+a.add(a, a.length(a))
+a.add(a, "Hello, Wonderful World!");
+a.add(a, a.length(a))
+
+a

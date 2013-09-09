@@ -1,3 +1,5 @@
+ARRAY_DEFAULT_ALLOC = 8
+
 varMap = {}
 nextReg = 0
 lastAssignedReg = -1
@@ -130,6 +132,7 @@ instructions = {
     'MOVE':         (genInstr_iAB,  LOAD_YES),
     'RET':          (genInstr_iA,   LOAD_NO),
     'NEWOBJECT':    (genInstr_iA,   LOAD_YES),
+    'NEWARRAY':     (genInstr_iABx, LOAD_YES),
     'SETSELF':      (genInstr_iA,   LOAD_NO),
     'GET':          (genInstr_iABx, LOAD_YES),
     'SET':          (genInstr_iABx, LOAD_NO),
@@ -366,6 +369,11 @@ class NewObjLiteral(RValue):
     def __init__(self): RValue.__init__(self)
     def storeTo(self, dest_regnum):
         return genInstr("NEWOBJECT", dest_regnum)
+
+class NewArrLiteral(RValue):
+    def __init__(self): RValue.__init__(self)
+    def storeTo(self, dest_regnum):
+        return genInstr("NEWARRAY", dest_regnum, '#'+str(ARRAY_DEFAULT_ALLOC))
 
 class Local(LValue):
 

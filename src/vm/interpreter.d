@@ -10,6 +10,7 @@ import vm.state;
 import vm.gc.types;
 
 enum LOUD = false;
+//enum LOUD = true;
 
 bool isUnboxedInt(DynObject obj) { return (cast(long)obj&1) == 0; }
 

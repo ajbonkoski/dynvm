@@ -7,14 +7,16 @@ import vm.gc.gc;
 import vm.gc.types;
 
 
+alias DynObject function(DynObject, DynObject) DynBinFunc;
+
 alias DynNativeBinData* DynNativeBin;
 struct DynNativeBinData
 {
   DynObjectData obj;
-  DynObject function(DynObject a, DynObject b) func;
+  DynBinFunc func;
 };
 
-void DynNativeBin_init(DynNativeBin self, DynVTable vtable, DynObject function(DynObject a, DynObject b) func)
+void DynNativeBin_init(DynNativeBin self, DynVTable vtable, DynBinFunc func)
 {
   DynObject_init(&self.obj);
   self.obj.gcheader.rawtypedata = GCTypes.FuncArg2;
@@ -22,14 +24,18 @@ void DynNativeBin_init(DynNativeBin self, DynVTable vtable, DynObject function(D
   self.func = func;
 }
 
+
+
+alias DynObject function(DynObject) DynUnaryFunc;
+
 alias DynNativeUnaryData* DynNativeUnary;
 struct DynNativeUnaryData
 {
   DynObjectData obj;
-  DynObject function(DynObject a) func;
+  DynUnaryFunc  func;
 };
 
-void DynNativeUnary_init(DynNativeUnary self, DynVTable vtable, DynObject function(DynObject a) func)
+void DynNativeUnary_init(DynNativeUnary self, DynVTable vtable, DynUnaryFunc func)
 {
   DynObject_init(&self.obj);
   self.obj.gcheader.rawtypedata = GCTypes.FuncArg1;

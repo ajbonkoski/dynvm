@@ -1,5 +1,6 @@
 module vm.gc.gc;
 import core.stdc.stdlib;
+import core.stdc.string;
 
 union GCObjectHeader
 {
@@ -11,9 +12,23 @@ void *GCAlloc(size_t size)
   return GCState.alloc(size);
 }
 
-T *GCAlloc(T)()
+T *GCAlloc(T)(size_t elts=1)
 {
-  return cast(T*) GCState.alloc(T.sizeof);
+  return cast(T*) GCState.alloc(elts * T.sizeof);
+}
+
+void *GCRealloc(void *oldptr, size_t oldsize, size_t newsize)
+{
+  void *newptr = GCState.alloc(newsize);
+  memcpy(newptr, oldptr, oldsize);
+  return newptr;
+}
+
+T *GCRealloc(T)(T *oldptr, size_t oldelts, size_t newelts)
+{
+  void *newptr = GCState.alloc(newelts * T.sizeof);
+  memcpy(newptr, oldptr, oldelts * T.sizeof);
+  return cast(T*) newptr;
 }
 
 /************* Private State **************/

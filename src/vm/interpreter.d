@@ -106,7 +106,9 @@ void interpretCode(ref State state, bool silent)
         break;
 
       case IOpcode.NEWARRAY:
-        auto obj = DynArray_create(inst.iABx.bx);
+        ulong initalloc = state.requireLiteralInt(inst.iABx.bx);
+        auto obj = DynArray_create(initalloc);
+        obj = cast(DynObject) (cast(long)obj | 1);
         state.setRegister(inst.iABx.a, obj);
         break;
 
@@ -125,17 +127,34 @@ void interpretCode(ref State state, bool silent)
         break;
 
       case IOpcode.CALL:
-        // DynObject[] args;
-        // uint arg_num = inst.iABC.b+1;
-        // uint arg_end = inst.iABC.c;
-        // foreach(i; arg_num..arg_end+1)
-        //   args ~= state.getRegister(i);
+        auto f_obj = state.getRegister(inst.iABC.b);
+        uint arg_start = inst.iABC.b+1;
+        uint arg_end = inst.iABC.c;
+        uint num_arg = (arg_end+1) - arg_start;
 
-        // //writeln(args);
-        // auto objB = state.getRegister(inst.iABC.b);
-        // auto obj = objB.vtable.call(args, objB);
-        // state.setRegister(inst.iABC.a, obj);
-        assert(0, "call is unimplemented");
+        DynObject ret_obj = null;
+        switch(num_arg) {
+
+          case 1:
+            assert(f_obj.gcheader.rawtypedata == GCTypes.FuncArg1);
+            auto unary_func = cast(DynNativeUnary) f_obj;
+            auto func = unary_func.func;
+            ret_obj = func(state.getRegister(arg_start));
+            break;
+
+          case 2:
+            assert(f_obj.gcheader.rawtypedata == GCTypes.FuncArg2);
+            auto bin_func = cast(DynNativeBin) f_obj;
+            auto func = bin_func.func;
+            ret_obj = func(state.getRegister(arg_start),
+                           state.getRegister(arg_start+1));
+            break;
+
+          default:
+            assert(0, "VM only supports 1 and 2 arg calls currently");
+        }
+
+        state.setRegister(inst.iABC.a, ret_obj);
         break;
 
       case IOpcode.TEST:

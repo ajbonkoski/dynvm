@@ -19,8 +19,8 @@ struct State
   alias frame this; // allow the user to directly call methods on the to StackFrame
 
   DynObject _self;
-  @property auto self() { return _self; }
-  @property void self(DynObject s) { _self = s; }
+  @property auto self() { return cast(DynObject) (cast(long)_self | 1); }
+  @property void self(DynObject s) { _self = cast(DynObject) (cast(long)s & ~1); }
 
   DynObject _ret;
   @property auto ret() { return _ret; }
@@ -69,18 +69,18 @@ struct State
 
   DynObject selfGet(uint num)
   {
-    assert(self !is null);
+    assert(_self !is null);
     Literal l = frame.getLiteral(num);
     assert(l.type == LType.String);
-    return DynObject_get(l.s, self);
+    return DynObject_get(l.s, _self);
   }
 
   void selfSet(uint num, DynObject obj)
   {
-    assert(self !is null);
+    assert(_self !is null);
     Literal l = frame.getLiteral(num);
     assert(l.type == LType.String);
-    return DynObject_set(l.s, obj, self);
+    return DynObject_set(l.s, obj, _self);
   }
 
   auto stringify(IndentedWriter iw)

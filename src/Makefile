@@ -28,6 +28,7 @@ vm/dyn_obj/dyn_native.d  \
 vm/dyn_obj/dyn_int.d     \
 vm/dyn_obj/dyn_str.d     \
 vm/dyn_obj/dyn_array.d   \
+vm/dyn_obj/dyn_tag.d     \
 vm/stack_frame.d         \
 vm/state.d               \
 vm/interpreter.d         \

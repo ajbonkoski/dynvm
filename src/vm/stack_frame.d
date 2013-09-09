@@ -46,6 +46,13 @@ final class StackFrame
     return code.getLiteral(num);
   }
 
+  long requireLiteralInt(uint num)
+  {
+    Literal l = code.getLiteral(num);
+    assert(l.type == LType.Int);
+    return l.i;
+  }
+
   DynObject getLiteralObj(uint num)
   {
     Literal l = code.getLiteral(num);

@@ -1,0 +1,22 @@
+
+        NEWARRAY   r1   #20
+        SETSELF    r1
+        GET        r0   "add"
+
+        LITERAL    r2   "stored string"
+        CALL       r3   r0  r2
+
+        LITERAL    r2   #42
+        CALL       r3   r0  r2
+
+        LITERAL    r2   "heterogenous arrays work!"
+        CALL       r3   r0  r2
+
+        GET        r0   "length"
+        CALL       r2   r0  r1
+
+        ;; add the length to the array
+        GET        r0   "add"
+        CALL       r3   r0  r2
+
+        RET        r1

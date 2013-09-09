@@ -5,6 +5,7 @@ public import vm.dyn_obj.dyn_native;
 public import vm.dyn_obj.dyn_int;
 public import vm.dyn_obj.dyn_str;
 public import vm.dyn_obj.dyn_array;
+public import vm.dyn_obj.dyn_tag;
 
 import std.stdio;
 import std.string;
@@ -27,6 +28,11 @@ struct DynObjectBuiltin
     }
   }
 
+  static DynObject create(T)(T val) if(is(T : long) || is(T : ulong))
+  {
+    return cast(DynObject) (val<<1);
+  }
+
   static DynObject create(string T)() if(T == "object")
   {
     return DynObject_create;
@@ -34,7 +40,7 @@ struct DynObjectBuiltin
 }
 
 /******************************************************************/
-/** Helper functions to enable a UFCS style and ASM interfacing **/
+/*** Helper functions to enable a UFCS style and ASM interfacing **/
 /******************************************************************/
 
 public DynObject Dyn_get(DynObject ctx, string name)
@@ -51,34 +57,37 @@ public DynObject Dyn_binop(string op)(DynObject a, DynObject b)
   return f(a, b);
 }
 
-public string Dyn_toString(DynObject ctx_)
+public string Dyn_toString(DynObject ctx)
 {
-  long l = cast(long) ctx_;
-  if((l&1) == 0)
-    return format("%d", l>>1);
+  if(ctx.Dyn_tag_is_int)
+    return format("%d", ctx.Dyn_untag_int);
 
-  auto ctx = cast(DynObject) (cast(long)ctx_ & ~1);
-  return ctx.vtable.toString(ctx);
+  else {
+    auto c = ctx.Dyn_untag_obj;
+    return c.vtable.toString(c);
+  }
 }
 
-public string Dyn_pretty(DynObject ctx_)
+public string Dyn_pretty(DynObject ctx)
 {
-  long l = cast(long) ctx_;
-  if((l&1) == 0)
-    return format("%d", l>>1);
+  if(ctx.Dyn_tag_is_int)
+    return format("%d", ctx.Dyn_untag_int);
 
-  auto ctx = cast(DynObject) (cast(long)ctx_ & ~1);
-  return ctx.vtable.pretty(ctx);
+  else {
+    auto c = ctx.Dyn_untag_obj;
+    return c.vtable.pretty(c);
+  }
 }
 
-public bool Dyn_truthiness(DynObject ctx_)
+public bool Dyn_truthiness(DynObject ctx)
 {
-  long l = cast(long)ctx_;
-  if((l & 1) == 0)
-    return l != 0 ? 1 : 0;
+  if(ctx.Dyn_tag_is_int)
+    return cast(long)ctx != 0 ? 1 : 0;
 
-  auto ctx = cast(DynObject) (cast(long)ctx_ & ~1);
-  return ctx.vtable.truthiness(ctx);
+  else {
+    auto c = ctx.Dyn_untag_obj;
+    return c.vtable.truthiness(c);
+  }
 }
 
 

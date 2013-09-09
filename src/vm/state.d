@@ -18,11 +18,11 @@ struct State
   StackFrame frame;
   alias frame this; // allow the user to directly call methods on the to StackFrame
 
-  DynObject _self;
+  DynObject _self = null;
   @property auto self() { return cast(DynObject) (cast(long)_self | 1); }
   @property void self(DynObject s) { _self = cast(DynObject) (cast(long)s & ~1); }
 
-  DynObject _ret;
+  DynObject _ret = null;
   @property auto ret() { return _ret; }
   @property void ret(DynObject r) { _ret = r; }
 
@@ -85,7 +85,7 @@ struct State
 
   auto stringify(IndentedWriter iw)
   {
-    iw.formattedWrite("self: %s\n", self.Dyn_toString);
+    iw.formattedWrite("self: %s\n", self);
     iw.formattedWrite("ret:  %s\n", ret.Dyn_toString);
     iw.formattedWrite("Num Globals: %d\n", globals.length);
     iw.indent();

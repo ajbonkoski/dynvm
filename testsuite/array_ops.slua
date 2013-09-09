@@ -5,5 +5,7 @@ a.add(a, 9)
 a.add(a, a.length(a))
 a.add(a, "Hello, Wonderful World!");
 a.add(a, a.length(a))
-
+b = a.get(a, 0);
+a.set(a, 0, a.get(a, 3))
+a.add(a, b)
 a

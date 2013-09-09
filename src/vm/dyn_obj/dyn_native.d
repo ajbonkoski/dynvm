@@ -7,6 +7,25 @@ import vm.gc.gc;
 import vm.gc.types;
 
 
+alias DynObject function(DynObject, DynObject, DynObject) DynTriFunc;
+
+alias DynNativeTriData* DynNativeTri;
+struct DynNativeTriData
+{
+  DynObjectData obj;
+  DynTriFunc func;
+};
+
+void DynNativeTri_init(DynNativeTri self, DynVTable vtable, DynTriFunc func)
+{
+  DynObject_init(&self.obj);
+  self.obj.gcheader.rawtypedata = GCTypes.FuncArg3;
+  self.obj.vtable = vtable;
+  self.func = func;
+}
+
+
+
 alias DynObject function(DynObject, DynObject) DynBinFunc;
 
 alias DynNativeBinData* DynNativeBin;

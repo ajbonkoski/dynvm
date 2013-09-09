@@ -22,6 +22,14 @@ static this() {
   vt.toString   = &DynNativeArray_toString;
 }
 
+DynObject DynNativeTriArray_create(DynTriFunc func)
+{
+  auto self = GCAlloc!DynNativeTriData;
+  auto vtable = DynNativeArray_vtable;
+  DynNativeTri_init(self, vtable, func);
+  return cast(DynObject) self;
+}
+
 DynObject DynNativeBinArray_create(DynBinFunc func)
 {
   auto self = GCAlloc!DynNativeBinData;
@@ -63,6 +71,8 @@ static this()
   DynObject_init(obj);
   DynObject_set("length", DynNativeUnaryArray_create(&DynArray_length), obj);
   DynObject_set("add",    DynNativeBinArray_create(&DynArray_add),      obj);
+  DynObject_set("set",    DynNativeTriArray_create(&DynArray_set),      obj);
+  DynObject_set("get",    DynNativeBinArray_create(&DynArray_get),      obj);
 }
 
 
@@ -167,6 +177,27 @@ DynObject DynArray_add(DynObject self_, DynObject obj)
   self.length++;
 
   return null;
+}
+
+DynObject DynArray_set(DynObject self_, DynObject index, DynObject obj)
+{
+  DynArray self = cast(DynArray) self_.Dyn_untag_obj;
+  assert(index.Dyn_tag_is_int);
+  long i = index.Dyn_untag_int;
+  assert(i < self.length);
+  self.array[i] = obj;
+
+  return null;
+}
+
+DynObject DynArray_get(DynObject self_, DynObject index)
+{
+  DynArray self = cast(DynArray) self_.Dyn_untag_obj;
+  assert(index.Dyn_tag_is_int);
+  long i = index.Dyn_untag_int;
+  assert(i < self.length);
+  return self.array[i];
+
 }
 
 // DynObject DynArray_get(DynObject self_, DynObject obj)

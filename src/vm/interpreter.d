@@ -151,8 +151,17 @@ void interpretCode(ref State state, bool silent)
                            state.getRegister(arg_start+1));
             break;
 
+          case 3:
+            assert(f_obj.gcheader.rawtypedata == GCTypes.FuncArg3);
+            auto bin_func = cast(DynNativeTri) f_obj;
+            auto func = bin_func.func;
+            ret_obj = func(state.getRegister(arg_start),
+                           state.getRegister(arg_start+1),
+                           state.getRegister(arg_start+2));
+            break;
+
           default:
-            assert(0, "VM only supports 1 and 2 arg calls currently");
+            assert(0, "VM only supports 1, 2 & 3 arg calls currently");
         }
 
         state.setRegister(inst.iABC.a, ret_obj);

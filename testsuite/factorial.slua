@@ -1,0 +1,14 @@
+
+ret = []
+i = 1
+n = 21
+
+acc = 1
+while i <= n do
+  ret.add(ret, acc)
+  acc = acc * i
+  i = i + 1
+end
+
+ret
+

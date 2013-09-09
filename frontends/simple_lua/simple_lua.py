@@ -173,7 +173,21 @@ def genLabel(label):
 
 #####################################################################
 
+def genMethodCall(self_reg, dest_reg, fname, arglist):
+    func_reg = allocTempReg()
 
+    inst = ''
+    inst += genInstr('SETSELF', self_reg)
+    inst += genInstr('GET', func_reg, stringify(fname))
+
+    last_arg_reg = func_reg
+    for arg in arglist:
+        tmp = allocTempReg()
+        inst += arg.storeTo(tmp)
+        last_arg_reg = tmp
+
+    inst += genInstr('CALL', dest_reg, func_reg, last_arg_reg)
+    return inst
 
 
 def genBinCall(val_a, ops_list):
@@ -253,7 +267,11 @@ def genWhileStmt(cond, body):
 def genFinal(code_seq):
     return llBlock.get_instr() + code_seq.instr + genInstr("RET", code_seq.outreg)
 
-
+def pList(arg, junk):
+    print '='*40
+    print arg
+    print '='*40
+    return [arg[0]]
 
 class CodeSequence:
     def __init__(self, instr, outreg):
@@ -421,14 +439,14 @@ class Member(LValue):
     def reduceName(self):
         assert(len(self.name) > 0)
         last_name = self.name[-1]
-        assert(type(last_name) == type(''))
+        #assert(type(last_name) == type(''))
         name_list = self.name[:-1]
 
         ## reduce each name
         new_reg = allocTempReg()
         new_var = Local.fromReg(new_reg)
         for n in name_list:
-            assert(type(n) == type(''))
+            assert(type(n) == type('') or type(n) == type(tuple()))
             self.name = n
             self.instr = self.storeTo(new_reg)
             self.var = new_var
@@ -436,10 +454,17 @@ class Member(LValue):
         ## set the final self.name
         self.name = last_name
 
-
     def storeTo(self, dest_regnum):
         self_regnum = self.var.getRegister()
-        return self.instr + genInstr("GETMEMBER", self_regnum, dest_regnum, stringify(self.name))
+
+        # is name a simple string?
+        if type(self.name) == type(''):
+            return self.instr + genInstr("GETMEMBER", self_regnum, dest_regnum, stringify(self.name))
+
+        # name must be a call
+        else:
+            fname, arglist = self.name
+            return self.instr + genMethodCall(self_regnum, dest_regnum, fname, arglist)
 
     def genAssign(self, source):
         regnum = self.resolveSrcReg(source);
